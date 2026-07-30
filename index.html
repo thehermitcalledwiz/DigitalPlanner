@@ -20,910 +20,146 @@
     *::-webkit-scrollbar { width: 5px; height: 5px; }
     *::-webkit-scrollbar-thumb { background: #065f46; border-radius: 999px; }
     *::-webkit-scrollbar-track { background: #000000; }
+
+    /* Custom Neon Z Logo Style */
+    .neon-logo {
+        background-color: #000000;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #10b981;
+        text-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+    }
   </style>
 </head>
 
-<body class="bg-black text-emerald-400 min-h-screen p-1 sm:p-3 md:p-4 font-mono selection:bg-emerald-900 selection:text-white" x-data="smartPlannerApp()">
-  <div class="max-w-[1400px] mx-auto bg-black rounded-2xl sm:rounded-3xl shadow-2xl shadow-emerald-950/50 border border-emerald-900/60 overflow-hidden flex flex-col md:flex-row h-[97vh] sm:h-[95vh]">
+<body class="bg-black text-emerald-400 min-h-full flex flex-col font-sans" x-data="medPlanner()">
 
-    <aside class="hidden md:flex w-64 bg-black border-r border-emerald-900/60 flex-col justify-between p-4 shrink-0">
-      <div class="space-y-6">
-        <div class="space-y-3 px-2">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-black border border-emerald-500/50 flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-900/30">
-              <<<img src="giphy.jpg" alt="Matrix Logo" class="w-full h-full object-cover"> src="giphy.jpg" alt="Matrix Logo" class="w-full h-full object-cover"> src="https://media2.giphy.com/media/l0HlRnAWXxn0MhOBK/giphy.gif" alt="Lightning Bolt" class="w-6 h-6 object-contain filter drop-shadow-[0_0_4px_#34d399]" />
-            </div>
-            <div>
-              <h1 class="font-extrabold text-emerald-300 tracking-wider text-xs leading-tight">YL2 MEDICINE</h1>
-              <p class="text-[10px] text-emerald-500 font-medium" x-text="timeGreeting"></p>
-            </div>
+  <header class="bg-zinc-950 border-b border-emerald-900/50 p-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+      <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-lg neon-logo text-lg font-mono">
+              Z
           </div>
-          <div class="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-900/50 text-[11px] text-emerald-400/90 italic text-center">
-            "Chop wood, carry water"
+          <div>
+              <h1 class="text-base md:text-xl font-bold tracking-wider text-emerald-400">MD-2 CLINICAL & BASIC SCIENCES</h1>
+              <p class="text-[10px] text-emerald-600/80">Year Level 2 Master Dashboard</p>
           </div>
-        </div>
-
-        <nav class="space-y-1">
-          <template x-for="item in navItems" :key="item.id">
-            <button @click="currentNav = item.id"
-                    :class="currentNav === item.id ? 'bg-emerald-900/60 text-emerald-200 border border-emerald-500/50 shadow-lg shadow-emerald-950 font-semibold' : 'text-emerald-500 hover:bg-emerald-950/40 hover:text-emerald-300 font-medium border border-transparent'"
-                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left relative">
-              <span class="text-base" x-text="item.icon"></span>
-              <span x-text="item.label"></span>
-              <template x-if="item.id === 'trash' && trashBin.length > 0">
-                <span class="absolute right-3 bg-red-950 text-red-400 border border-red-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold" x-text="trashBin.length"></span>
-              </template>
-            </button>
-          </template>
-        </nav>
       </div>
-
-      <div class="bg-emerald-950/40 border border-emerald-900/60 rounded-2xl p-3 text-xs text-emerald-300 space-y-1">
-        <div class="font-bold flex items-center justify-between">
-          <span>Cloud Sync</span>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        </div>
-        <p class="text-[10px] text-emerald-500 truncate" x-text="syncStatusText"></p>
+      <div class="text-xs font-mono text-emerald-400 bg-emerald-950/40 px-3 py-1 rounded border border-emerald-900/50">
+          <span x-text="currentDateStr"></span>
       </div>
-    </aside>
+  </header>
 
-    <div class="md:hidden flex flex-col bg-black border-b border-emerald-900/60 p-3 shrink-0">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-lg bg-black border border-emerald-500/50 flex items-center justify-center overflow-hidden">
-            <<<img src="giphy.jpg" alt="Matrix Logo" class="w-full h-full object-cover"> src="giphy.jpg" alt="Matrix Logo" class="w-full h-full object-cover"> src="https://media2.giphy.com/media/l0HlRnAWXxn0MhOBK/giphy.gif" alt="Bolt" class="w-4 h-4 object-contain filter drop-shadow-[0_0_3px_#34d399]" />
+  <main class="flex-1 p-4 max-w-7xl mx-auto w-full flex flex-col gap-4">
+      
+      <div class="flex items-center justify-between bg-zinc-900/60 border border-emerald-900/30 p-3 rounded-xl">
+          <div class="flex items-center space-x-2">
+              <button @click="changeMonth(-1)" class="px-3 py-1 bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 rounded text-xs text-emerald-300 transition">&larr; Prev</button>
+              <h2 class="text-sm md:text-base font-semibold text-emerald-300 px-2" x-text="calendarMonthName"></h2>
+              <button @click="changeMonth(1)" class="px-3 py-1 bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 rounded text-xs text-emerald-300 transition">Next &rarr;</button>
           </div>
-          <span class="font-extrabold text-emerald-300 text-xs">YL2 MED PLANNER</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button @click="undo()" :disabled="historyIndex <= 0" class="px-2 py-1 bg-black border border-emerald-900 text-[10px] rounded text-emerald-300 disabled:opacity-30">↩</button>
-          <button @click="redo()" :disabled="historyIndex >= history.length - 1" class="px-2 py-1 bg-black border border-emerald-900 text-[10px] rounded text-emerald-300 disabled:opacity-30">↪</button>
-        </div>
-      </div>
-      <div class="flex overflow-x-auto gap-1 mt-3 pt-2 border-t border-emerald-950 pb-1 scrollbar-none">
-        <template x-for="item in navItems" :key="item.id">
-          <button @click="currentNav = item.id"
-                  :class="currentNav === item.id ? 'bg-emerald-900 text-emerald-200 border-emerald-500 font-bold' : 'bg-emerald-950/30 text-emerald-500 border-emerald-900/50'"
-                  class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap border transition-all flex items-center gap-1.5 shrink-0">
-            <span x-text="item.icon"></span>
-            <span x-text="item.label"></span>
+          <button @click="openNewTaskModal()" class="bg-emerald-600 hover:bg-emerald-500 text-black font-bold px-3 py-1.5 rounded text-xs transition shadow-lg shadow-emerald-900/20">
+              + Add Event/Task
           </button>
-        </template>
-      </div>
-    </div>
-
-    <main class="flex-1 flex flex-col overflow-hidden bg-black">
-      <header class="hidden md:flex h-16 border-b border-emerald-900/60 px-6 items-center justify-between shrink-0 bg-black">
-        <div class="flex items-center gap-4">
-          <h2 class="text-lg font-extrabold text-emerald-300 tracking-tight" x-text="dateHeaderString"></h2>
-          <div class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-900" x-text="currentTimeString"></div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button @click="undo()" :disabled="historyIndex <= 0"
-                  :class="historyIndex <= 0 ? 'opacity-40 cursor-not-allowed bg-black' : 'hover:bg-emerald-950 bg-black border-emerald-800 text-emerald-200'"
-                  class="px-3 py-1.5 rounded-xl border border-emerald-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
-            <span>↩</span> Undo
-          </button>
-          <button @click="redo()" :disabled="historyIndex >= history.length - 1"
-                  :class="historyIndex >= history.length - 1 ? 'opacity-40 cursor-not-allowed bg-black' : 'hover:bg-emerald-950 bg-black border-emerald-800 text-emerald-200'"
-                  class="px-3 py-1.5 rounded-xl border border-emerald-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
-            Redo <span>↪</span>
-          </button>
-        </div>
-      </header>
-
-      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'calendar'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h3 class="font-bold text-emerald-300 text-base sm:text-lg" x-text="calendarMonthName"></h3>
-            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Interactive Master Calendar. Tap any date cell to add or manage your schedule.</p>
-          </div>
-          <div class="flex gap-2 w-full sm:w-auto justify-end">
-            <button @click="changeMonth(-1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">&larr; Prev</button>
-            <button @click="changeMonth(1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">Next &rarr;</button>
-          </div>
-        </div>
-
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-2 sm:p-4">
-          <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center font-bold text-[10px] sm:text-xs text-emerald-500">
-            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-          </div>
-          <div class="grid grid-cols-7 gap-1 sm:gap-2">
-            <template x-for="day in calendarDays" :key="day.dateStr || Math.random()">
-              <div @click="day.dateStr && openDayModal(day.dateStr)"
-                   :class="day.isCurrentMonth ? 'bg-black border-emerald-900 hover:border-emerald-500 cursor-pointer' : 'bg-emerald-950/10 border-emerald-950/40 opacity-30'"
-                   class="border rounded-xl p-1.5 sm:p-2 h-24 sm:h-36 flex flex-col justify-between overflow-hidden transition-all">
-                <div class="flex items-center justify-between">
-                  <div class="text-[11px] sm:text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
-                  <template x-if="day.dateStr">
-                    <span class="text-[8px] sm:text-[9px] text-emerald-600">+ Add</span>
-                  </template>
-                </div>
-                <div class="space-y-0.5 sm:space-y-1 overflow-y-auto flex-1 mt-1 pr-0.5">
-                  <template x-for="(task, tIdx) in getTasksForDate(day.dateStr)" :key="tIdx">
-                    <div class="text-[8px] sm:text-[9px] bg-emerald-950/90 border border-emerald-800/80 text-emerald-300 px-1 py-0.5 rounded truncate" x-text="task"></div>
-                  </template>
-                </div>
-              </div>
-            </template>
-          </div>
-        </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'topics'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">Subject Topics & High-Yield Checklists</h3>
-            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Organize study modules by subject. Track completion status in real-time.</p>
-          </div>
-          <button @click="addSubjectGroup()" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Subject</button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <template x-for="(sub, sIdx) in subjectTopics" :key="sub.id">
-            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-4 flex flex-col justify-between">
-              <div class="space-y-3">
-                <div class="flex items-center justify-between gap-2">
-                  <input type="text" x-model="sub.name" @input="recordChange()" placeholder="Subject Name..."
-                         class="bg-black border border-emerald-900 rounded-lg px-2.5 py-1 text-xs font-extrabold text-emerald-200 w-full focus:outline-none focus:border-emerald-500">
-                  <button @click="removeSubjectGroup(sIdx)" class="text-red-400 hover:text-red-300 text-xs px-2 py-1 border border-red-950 rounded-lg">×</button>
-                </div>
-
-                <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
-                  <template x-for="(topic, tIdx) in sub.topics" :key="topic.id">
-                    <div class="flex items-center justify-between gap-2 bg-emerald-950/20 border border-emerald-900/50 p-2 rounded-xl">
-                      <div class="flex items-center gap-2.5 flex-1">
-                        <input type="checkbox" x-model="topic.done" @change="recordChange()"
-                               class="w-4 h-4 accent-emerald-500 bg-black border-emerald-800 rounded cursor-pointer">
-                        <input type="text" x-model="topic.title" @input="recordChange()" placeholder="Topic name..."
-                               :class="topic.done ? 'line-through text-emerald-600' : 'text-emerald-300'"
-                               class="bg-transparent text-xs w-full focus:outline-none">
-                      </div>
-                      <button @click="removeTopicItem(sIdx, tIdx)" class="text-red-400/70 hover:text-red-300 text-[10px]">✕</button>
-                    </div>
-                  </template>
-                  <template x-if="sub.topics.length === 0">
-                    <div class="text-[11px] text-emerald-600 italic text-center py-2">No topics added yet.</div>
-                  </template>
-                </div>
-              </div>
-
-              <div class="pt-2 border-t border-emerald-950 flex gap-2">
-                <input type="text" x-model="sub.newTopicText" @keyup.enter="addTopicItem(sIdx)" placeholder="New topic..."
-                       class="flex-1 bg-black border border-emerald-900 rounded-xl px-3 py-1.5 text-xs text-emerald-200 focus:outline-none focus:border-emerald-500">
-                <button @click="addTopicItem(sIdx)" class="px-3 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded-xl text-xs font-bold">+</button>
-              </div>
-            </div>
+      <div class="grid grid-cols-7 gap-1 bg-zinc-950 border border-emerald-900/40 rounded-xl p-2 flex-1">
+          <template x-for="dayName in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']">
+              <div class="text-center text-[11px] font-bold text-emerald-600 py-1" x-text="dayName"></div>
           </template>
-        </div>
-      </div>
 
-      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'exams'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">Exam Week Schedule & Dates</h3>
-            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Fully customizable exam grid. Edit times, exam titles, and rooms freely.</p>
-          </div>
-          <div class="flex gap-2 w-full sm:w-auto justify-end">
-            <button @click="addExamTimeSlot()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Row</button>
-            <button @click="resetExamSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Reset</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
-          <template x-for="(block, bIdx) in examBlocks" :key="block.id">
-            <div class="bg-black border border-emerald-900/80 rounded-2xl p-3 sm:p-4 space-y-2 relative">
-              <button @click="removeExamBlock(bIdx)" class="absolute top-2 right-2 text-[10px] text-red-400 hover:text-red-300">×</button>
-              <input type="text" x-model="block.title" @input="recordChange()" placeholder="Exam Block..." class="bg-black border border-emerald-900 rounded px-2 py-1 text-xs font-bold text-emerald-200 w-full focus:outline-none focus:border-emerald-500">
-              <input type="text" x-model="block.dateRange" @input="recordChange()" placeholder="Date Range..." class="bg-black border border-emerald-900 rounded px-2 py-1 text-xs text-emerald-300 w-full focus:outline-none focus:border-emerald-500">
-              <input type="text" x-model="block.desc" @input="recordChange()" placeholder="Description..." class="bg-black border border-emerald-900 rounded px-2 py-1 text-[11px] text-emerald-500 w-full focus:outline-none focus:border-emerald-500">
-            </div>
-          </template>
-        </div>
-
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-3 sm:p-4 overflow-x-auto space-y-3">
-          <div class="text-xs font-bold text-emerald-400">Exam Week Daily Grid Matrix</div>
-          <table class="w-full border-collapse text-xs min-w-[700px]">
-            <thead>
-              <tr class="border-b border-emerald-900 text-emerald-500">
-                <th class="p-3 text-left w-28">TIME</th>
-                <th class="p-3 text-left">MONDAY</th>
-                <th class="p-3 text-left">TUESDAY</th>
-                <th class="p-3 text-left">WEDNESDAY</th>
-                <th class="p-3 text-left">THURSDAY</th>
-                <th class="p-3 text-left">FRIDAY</th>
-                <th class="p-3 text-left w-14">ACTION</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-emerald-950">
-              <template x-for="(slotItem, sIndex) in examGridSlots" :key="slotItem.id">
-                <tr>
-                  <td class="p-2 align-top">
-                    <input type="text" x-model="slotItem.time" @input="recordChange()" class="w-full bg-black border border-emerald-900 rounded px-2 py-1 font-bold text-emerald-300 text-xs focus:outline-none focus:border-emerald-500">
-                  </td>
-                  <template x-for="day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']" :key="day">
-                    <td class="p-1.5 align-top">
-                      <div class="space-y-1">
-                        <template x-for="(cell, cIdx) in getExamGridCellsBySlotId(slotItem.id, day)" :key="cIdx">
-                          <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2 space-y-1">
-                            <input type="text" x-model="cell.subject" @input="recordChange()" placeholder="Exam Name..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-1.5 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none">
-                            <input type="text" x-model="cell.location" @input="recordChange()" placeholder="Room..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-1.5 py-0.5 text-[10px] text-emerald-400 focus:outline-none">
-                            <div class="flex justify-end">
-                              <button @click="removeExamGridCell(slotItem.id, day, cIdx)" class="text-[9px] text-red-400">Remove</button>
-                            </div>
-                          </div>
-                        </template>
-                        <button @click="addExamGridCell(slotItem.id, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add</button>
-                      </div>
-                    </td>
-                  </template>
-                  <td class="p-2 align-top">
-                    <button @click="removeExamTimeSlot(sIndex)" class="text-red-400 text-xs font-bold">×</button>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'classes'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">Year Level 2 Fixed Class Schedule</h3>
-            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Your standard weekly classes. Tap any cell to modify.</p>
-          </div>
-          <button @click="resetFixedSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Reset Template</button>
-        </div>
-
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-3 sm:p-4 overflow-x-auto">
-          <table class="w-full border-collapse text-xs min-w-[700px]">
-            <thead>
-              <tr class="border-b border-emerald-900 text-emerald-500">
-                <th class="p-3 text-left w-24">TIME</th>
-                <th class="p-3 text-left">MONDAY</th>
-                <th class="p-3 text-left">TUESDAY</th>
-                <th class="p-3 text-left">WEDNESDAY</th>
-                <th class="p-3 text-left">THURSDAY</th>
-                <th class="p-3 text-left">FRIDAY</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-emerald-950">
-              <template x-for="timeSlot in fixedTimes" :key="timeSlot">
-                <tr>
-                  <td class="p-3 font-bold text-emerald-400 align-top" x-text="timeSlot"></td>
-                  <template x-for="day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']" :key="day">
-                    <td class="p-1.5 align-top">
-                      <div class="space-y-1">
-                        <template x-for="(cell, cIdx) in getFixedCells(timeSlot, day)" :key="cIdx">
-                          <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2 space-y-1">
-                            <input type="text" x-model="cell.subject" @input="recordChange()" placeholder="Subject..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-1.5 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none">
-                            <input type="text" x-model="cell.location" @input="recordChange()" placeholder="Location..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-1.5 py-0.5 text-[10px] text-emerald-400 focus:outline-none">
-                            <div class="flex justify-end">
-                              <button @click="removeFixedCell(timeSlot, day, cIdx)" class="text-[9px] text-red-400">Remove</button>
-                            </div>
-                          </div>
-                        </template>
-                        <button @click="addFixedCell(timeSlot, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add</button>
-                      </div>
-                    </td>
-                  </template>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'journal'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">Medical Study Journal & Quick Notes</h3>
-            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Jot down clinical correlations, high-yield reminders, or personal notes.</p>
-          </div>
-          <button @click="createNewJournalEntry()" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ New Note</button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-          <div class="space-y-2 md:col-span-1 max-h-56 md:max-h-[60vh] overflow-y-auto pr-2">
-            <template x-for="note in journalNotes" :key="note.id">
-              <div @click="activeJournalId = note.id"
-                   :class="activeJournalId === note.id ? 'bg-emerald-950 border-emerald-500' : 'bg-black border-emerald-900/60 hover:bg-emerald-950/30'"
-                   class="border rounded-xl p-3 cursor-pointer transition-all space-y-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-xs text-emerald-200 truncate" x-text="note.title || 'Untitled Note'"></span>
-                  <button @click.stop="deleteJournalEntry(note.id)" class="text-red-400 text-[10px] px-1.5 py-0.5 rounded border border-red-950">Delete</button>
-                </div>
-                <p class="text-[11px] text-emerald-500 truncate" x-text="note.content || 'Empty note...'"></p>
-                <div class="text-[9px] text-emerald-600 pt-1" x-text="note.date"></div>
+          <template x-for="day in calendarDays">
+              <div class="min-h-[85px] bg-zinc-900/40 border border-emerald-950 rounded p-1.5 flex flex-col justify-between transition hover:border-emerald-800/60"
+                   :class="{'opacity-30': !day.isCurrentMonth}">
+                  <div class="flex justify-between items-center text-xs">
+                      <span class="font-mono text-emerald-500" x-text="day.dayNum"></span>
+                  </div>
+                  <div class="flex-1 overflow-y-auto space-y-1 my-1">
+                      <template x-for="event in day.events">
+                          <div class="text-[10px] bg-emerald-950/80 border border-emerald-800/40 text-emerald-300 rounded px-1.5 py-0.5 truncate" x-text="event.title"></div>
+                      </template>
+                  </div>
               </div>
-            </template>
-            <template x-if="journalNotes.length === 0">
-              <div class="text-xs text-emerald-600 italic p-4 text-center">No active notes. Click "+ New Note".</div>
-            </template>
-          </div>
-
-          <div class="md:col-span-2 bg-black border border-emerald-900/80 rounded-2xl p-4 flex flex-col h-[50vh] md:h-[60vh]">
-            <template x-if="getActiveJournal()">
-              <div class="flex flex-col h-full space-y-3">
-                <input type="text" x-model="getActiveJournal().title" @input="recordChange()" placeholder="Note Title..."
-                       class="w-full bg-black border border-emerald-900 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
-                <textarea x-model="getActiveJournal().content" @input="recordChange()" placeholder="Write your notes here..."
-                          class="w-full flex-1 bg-black border border-emerald-900 rounded-xl p-3 text-xs text-emerald-300 focus:outline-none resize-none font-mono"></textarea>
-                <div class="flex items-center justify-between text-[11px] text-emerald-600 pt-2 border-t border-emerald-950">
-                  <span x-text="'Updated: ' + getActiveJournal().date"></span>
-                  <span class="text-emerald-500 font-semibold truncate max-w-[180px]" x-text="syncStatusText"></span>
-                </div>
-              </div>
-            </template>
-            <template x-if="!getActiveJournal()">
-              <div class="flex-1 flex items-center justify-center text-xs text-emerald-600 italic">Select a note from the list or create a new one.</div>
-            </template>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'trash'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">30-Day Trash Bin</h3>
-            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Deleted journal items are kept here for 30 days before permanent removal.</p>
-          </div>
-          <template x-if="trashBin.length > 0">
-            <button @click="emptyTrash()" class="px-4 py-2 bg-red-950 hover:bg-red-900 text-red-300 border border-red-900 font-bold rounded-xl text-xs shadow-sm">Empty Trash</button>
           </template>
-        </div>
-
-        <div class="space-y-3">
-          <template x-for="(item, index) in trashBin" :key="item.id">
-            <div class="bg-black border border-emerald-900/80 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div class="space-y-1">
-                <div class="text-xs sm:text-sm font-bold text-emerald-200" x-text="item.title || 'Untitled'"></div>
-                <div class="text-[11px] text-emerald-500 truncate max-w-md" x-text="item.content || 'Empty note...'"></div>
-                <div class="text-[10px] text-red-400" x-text="'Deleted on: ' + new Date(item.deletedAt).toLocaleDateString()"></div>
-              </div>
-              <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button @click="restoreFromTrash(index)" class="px-3 py-1.5 bg-emerald-950 border border-emerald-800 text-emerald-300 hover:bg-emerald-900 text-xs rounded-xl font-bold">Restore</button>
-                <button @click="permanentlyDelete(index)" class="px-3 py-1.5 bg-red-950 border border-red-900 text-red-300 hover:bg-red-900 text-xs rounded-xl font-bold">Delete Forever</button>
-              </div>
-            </div>
-          </template>
-          <template x-if="trashBin.length === 0">
-            <div class="text-center py-16 text-xs text-emerald-600 italic">Trash bin is completely empty.</div>
-          </template>
-        </div>
       </div>
+  </main>
 
-    </main>
-  </div>
-
-  <div x-show="showDayModal" x-cloak class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-black border border-emerald-900 rounded-3xl p-5 sm:p-6 w-full max-w-md space-y-4 shadow-2xl shadow-emerald-950">
-      <div class="flex items-center justify-between border-b border-emerald-900 pb-3">
-        <h3 class="text-emerald-300 font-bold text-xs sm:text-sm truncate" x-text="'Tasks for ' + modalDate"></h3>
-        <button @click="showDayModal = false" class="text-red-400 text-xs font-bold hover:text-red-300">Close</button>
-      </div>
-
-      <div class="space-y-2 max-h-60 overflow-y-auto">
-        <template x-for="(task, tIdx) in getTasksForDate(modalDate)" :key="tIdx">
-          <div class="bg-emerald-950/40 border border-emerald-900/60 rounded-xl p-2.5 flex items-center justify-between text-xs">
-            <span class="text-emerald-200" x-text="task"></span>
-            <button @click="removeTaskForDate(modalDate, tIdx)" class="text-red-400 hover:text-red-300 text-[10px]">Delete</button>
-          </div>
-        </template>
-        <template x-if="getTasksForDate(modalDate).length === 0">
-          <div class="text-xs text-emerald-600 italic text-center py-4">No custom tasks for this date.</div>
-        </template>
-      </div>
-
-      <div class="space-y-2 pt-2 border-t border-emerald-900">
-        <input type="text" x-model="newTaskText" placeholder="Add task or event..." @keyup.enter="addCustomTask()"
-               class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-xs text-emerald-200 focus:outline-none focus:border-emerald-500">
-        <button @click="addCustomTask()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Task</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBcFt0qsHouaON_U4k1w_mBlDGdslUt3-U",
-      authDomain: "my-digital-planner-scheduler.firebaseapp.com",
-      projectId: "my-digital-planner-scheduler",
-      storageBucket: "my-digital-planner-scheduler.firebasestorage.app",
-      messagingSenderId: "238183164684",
-      appId: "1:238183164684:web:51ef2928009a2fe1403729",
-      measurementId: "G-G4KVQZMKVC"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.cloudDB = db;
-    window.cloudDoc = doc;
-    window.cloudSetDoc = setDoc;
-    window.cloudGetDoc = getDoc;
-  </script>
+  <footer class="text-center py-3 text-[10px] text-emerald-600/60 border-t border-zinc-900">
+      MD-2 Digital Workspace &bull; Secure Local & Cloud Syncing Active
+  </footer>
 
   <script>
-    function smartPlannerApp() {
-      const uid = () => Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
-      
-      const defaultFixedTimes = ["8-10", "10-12", "1-3", "3-5"];
-      
-      const defaultFixedSchedule = [
-        { time: "8-10", day: "Monday", subject: "PATHO", location: "Lecture Hall" },
-        { time: "8-10", day: "Tuesday", subject: "IMPD", location: "Main Building" },
-        { time: "8-10", day: "Wednesday", subject: "MICRO", location: "Microbio Lab" },
-        { time: "8-10", day: "Thursday", subject: "MICRO", location: "Microbio Lab" },
-        { time: "8-10", day: "Friday", subject: "PEDIA1", location: "Pediatrics Ward" },
-        { time: "10-12", day: "Monday", subject: "PATHO", location: "Lecture Hall" },
-        { time: "10-12", day: "Wednesday", subject: "MICRO", location: "Microbio Lab" },
-        { time: "10-12", day: "Thursday", subject: "MICRO", location: "Microbio Lab" },
-        { time: "10-12", day: "Friday", subject: "MS2", location: "Lecture Hall" },
-        { time: "1-3", day: "Monday", subject: "BPHARM", location: "Main Building" },
-        { time: "1-3", day: "Tuesday", subject: "FCM2", location: "Discussion Room" },
-        { time: "1-3", day: "Wednesday", subject: "PATHO", location: "Lecture Hall" },
-        { time: "1-3", day: "Thursday", subject: "IMPD", location: "Main Building" },
-        { time: "1-3", day: "Friday", subject: "BPHARM", location: "Main Building" },
-        { time: "3-5", day: "Monday", subject: "PATHO", location: "Lecture Hall" },
-        { time: "3-5", day: "Tuesday", subject: "NS2-NEURO", location: "Lab Room" },
-        { time: "3-5", day: "Wednesday", subject: "PATHO", location: "Lecture Hall" },
-        { time: "3-5", day: "Thursday", subject: "IMPD", location: "Main Building" },
-        { time: "3-5", day: "Friday", subject: "BPHARM", location: "Main Building" }
-      ];
+      function medPlanner() {
+          return {
+              currentDateStr: new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+              viewYear: new Date().getFullYear(),
+              viewMonth: new Date().getMonth(),
+              calendarMonthName: '',
+              calendarDays: [],
+              calendarTasks: JSON.parse(localStorage.getItem('med_calendar_tasks')) || {},
 
-      const defaultExamBlocks = [
-        { id: uid(), title: "EXAM 1", dateRange: "Aug 24 - 28, 2026", desc: "First quarter evaluation" },
-        { id: uid(), title: "EXAM 2", dateRange: "Sep 28 - Oct 2, 2026", desc: "Second quarter evaluation" },
-        { id: uid(), title: "EXAM 3", dateRange: "Oct 26 - 30, 2026", desc: "Third quarter evaluation" },
-        { id: uid(), title: "EXAM 4", dateRange: "Dec 1 - 7, 2026", desc: "Final quarter evaluation" },
-        { id: uid(), title: "SEM EXAM", dateRange: "Dec 9 - 11, 2026", desc: "Semester Examination" }
-      ];
+              init() {
+                  this.buildCalendar();
+              },
 
-      const slotId1 = uid();
-      const slotId2 = uid();
+              buildCalendar() {
+                  const firstDayIndex = new Date(this.viewYear, this.viewMonth, 1).getDay();
+                  const totalDays = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
+                  this.calendarMonthName = new Date(this.viewYear, this.viewMonth).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+                  
+                  let days = [];
+                  const prevTotalDays = new Date(this.viewYear, this.viewMonth, 0).getDate();
+                  
+                  for (let i = firstDayIndex - 1; i >= 0; i--) {
+                      days.push({ dayNum: prevTotalDays - i, isCurrentMonth: false, dateStr: '', events: [] });
+                  }
 
-      const defaultExamGridSlots = [
-        { id: slotId1, time: "8-10" },
-        { id: slotId2, time: "10-12" }
-      ];
+                  for (let i = 1; i <= totalDays; i++) {
+                      const mStr = String(this.viewMonth + 1).padStart(2, '0');
+                      const dStr = String(i).padStart(2, '0');
+                      const dateString = `${this.viewYear}-${mStr}-${dStr}`;
+                      let evs = this.calendarTasks[dateString] || [];
+                      days.push({ dayNum: i, isCurrentMonth: true, dateStr: dateString, events: evs });
+                  }
 
-      const defaultExamGridSchedule = [
-        { slotId: slotId1, day: "Monday", subject: "PEDIA", location: "Exam Hall 1" },
-        { slotId: slotId1, day: "Tuesday", subject: "IMPD", location: "Exam Hall 1" },
-        { slotId: slotId1, day: "Wednesday", subject: "MICRO", location: "Exam Hall 1" },
-        { slotId: slotId1, day: "Thursday", subject: "FCM2", location: "Exam Hall 1" },
-        { slotId: slotId1, day: "Friday", subject: "MS2", location: "Exam Hall 1" },
-        { slotId: slotId2, day: "Monday", subject: "PATHO", location: "Exam Hall 1" },
-        { slotId: slotId2, day: "Tuesday", subject: "NS2", location: "Exam Hall 1" },
-        { slotId: slotId2, day: "Friday", subject: "BPHARM", location: "Exam Hall 1" }
-      ];
+                  const remaining = 42 - days.length;
+                  for (let i = 1; i <= remaining; i++) {
+                      days.push({ dayNum: i, isCurrentMonth: false, dateStr: '', events: [] });
+                  }
 
-      const defaultSubjectTopics = [
-        {
-          id: uid(),
-          name: "PATHO",
-          newTopicText: "",
-          topics: [
-            { id: uid(), title: "Cell Injury & Adaptation", done: true },
-            { id: uid(), title: "Inflammation & Repair", done: false },
-            { id: uid(), title: "Hemodynamics & Thrombosis", done: false }
-          ]
-        },
-        {
-          id: uid(),
-          name: "MICRO",
-          newTopicText: "",
-          topics: [
-            { id: uid(), title: "Bacteriology General Principles", done: true },
-            { id: uid(), title: "Gram Positive Cocci", done: false }
-          ]
-        }
-      ];
+                  this.calendarDays = days;
+              },
 
-      const defaultJournals = [
-        { id: uid(), title: 'YL2 Orientation & Modules', content: 'Keep track of high-yield cases and laboratory requirements.', date: new Date().toLocaleDateString() }
-      ];
+              changeMonth(dir) {
+                  this.viewMonth += dir;
+                  if (this.viewMonth > 11) {
+                      this.viewMonth = 0;
+                      this.viewYear++;
+                  } else if (this.viewMonth < 0) {
+                      this.viewMonth = 11;
+                      this.viewYear--;
+                  }
+                  this.buildCalendar();
+              },
 
-      return {
-        currentNav: 'calendar',
-        currentTimeString: '',
-        dateHeaderString: '',
-        timeGreeting: '',
-        syncStatusText: 'Connecting...',
-        navItems: [
-          { id: 'calendar', label: 'Master Calendar', icon: '📅' },
-          { id: 'topics', label: 'Topics', icon: '📚' },
-          { id: 'exams', label: 'Exam Week', icon: '📝' },
-          { id: 'classes', label: 'Fixed Schedule', icon: '🩺' },
-          { id: 'journal', label: 'Journal', icon: '📓' },
-          { id: 'trash', label: 'Trash Bin', icon: '🗑️' }
-        ],
-        journalNotes: defaultJournals,
-        activeJournalId: null,
-        
-        fixedTimes: defaultFixedTimes,
-        fixedSchedule: defaultFixedSchedule,
-        
-        examBlocks: defaultExamBlocks,
-        examGridSlots: defaultExamGridSlots,
-        examGridSchedule: defaultExamGridSchedule,
-        
-        subjectTopics: defaultSubjectTopics,
-        calendarTasks: {},
+              openNewTaskModal() {
+                  const title = prompt("Enter task/exam description:");
+                  if (!title) return;
+                  const dateStr = prompt("Enter date (Format: YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+                  if (!dateStr) return;
 
-        trashBin: [],
-        
-        history: [],
-        historyIndex: -1,
-        isRestoringHistory: false,
-
-        viewYear: 2026,
-        viewMonth: 7,
-        calendarMonthName: '',
-        calendarDays: [],
-
-        showDayModal: false,
-        modalDate: '',
-        newTaskText: '',
-
-        async init() {
-          this.updateClock();
-          setInterval(() => this.updateClock(), 1000);
-          await this.loadFromCloud();
-          this.generateCalendar();
-        },
-
-        async loadFromCloud() {
-          try {
-            if (!window.cloudDB) { 
-              setTimeout(() => this.loadFromCloud(), 400); 
-              return; 
-            }
-            const snap = await window.cloudGetDoc(window.cloudDoc(window.cloudDB, "planners", "med_schedule_data"));
-            if (snap.exists()) {
-              const data = snap.data();
-              this.journalNotes = (data.journalNotes && data.journalNotes.length > 0) ? data.journalNotes : defaultJournals;
-              this.fixedTimes = (data.fixedTimes && data.fixedTimes.length > 0) ? data.fixedTimes : defaultFixedTimes;
-              this.fixedSchedule = (data.fixedSchedule && data.fixedSchedule.length > 0) ? data.fixedSchedule : defaultFixedSchedule;
-              this.examBlocks = (data.examBlocks && data.examBlocks.length > 0) ? data.examBlocks : defaultExamBlocks;
-              this.examGridSlots = (data.examGridSlots && data.examGridSlots.length > 0) ? data.examGridSlots : defaultExamGridSlots;
-              this.examGridSchedule = (data.examGridSchedule && data.examGridSchedule.length > 0) ? data.examGridSchedule : defaultExamGridSchedule;
-              this.subjectTopics = (data.subjectTopics && data.subjectTopics.length > 0) ? data.subjectTopics : defaultSubjectTopics;
-              this.calendarTasks = data.calendarTasks || {};
-              
-              const now = Date.now();
-              const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-              let rawTrash = data.trashBin || [];
-              this.trashBin = rawTrash.filter(t => (now - t.deletedAt) < thirtyDaysMs);
-
-              this.syncStatusText = "Synced ✨";
-            } else {
-              this.syncStatusText = "Creating Record ✨";
-              this.saveToCloud();
-            }
-          } catch (e) {
-            console.error("Cloud load error:", e);
-            this.syncStatusText = "Sync Failed ⚠️";
+                  if (!this.calendarTasks[dateStr]) {
+                      this.calendarTasks[dateStr] = [];
+                  }
+                  this.calendarTasks[dateStr].push({ title });
+                  localStorage.setItem('med_calendar_tasks', JSON.stringify(this.calendarTasks));
+                  this.buildCalendar();
+              }
           }
-          if (this.journalNotes.length > 0 && !this.activeJournalId) {
-            this.activeJournalId = this.journalNotes[0].id;
-          }
-          this.pushHistoryState();
-          this.generateCalendar();
-        },
-
-        pushHistoryState() {
-          if (this.isRestoringHistory) return;
-          const currentState = JSON.stringify({
-            journalNotes: this.journalNotes,
-            fixedTimes: this.fixedTimes,
-            fixedSchedule: this.fixedSchedule,
-            examBlocks: this.examBlocks,
-            examGridSlots: this.examGridSlots,
-            examGridSchedule: this.examGridSchedule,
-            subjectTopics: this.subjectTopics,
-            calendarTasks: this.calendarTasks,
-            trashBin: this.trashBin
-          });
-          
-          if (this.historyIndex >= 0 && this.history[this.historyIndex] === currentState) return;
-
-          this.history = this.history.slice(0, this.historyIndex + 1);
-          this.history.push(currentState);
-          this.historyIndex = this.history.length - 1;
-        },
-
-        recordChange() {
-          this.pushHistoryState();
-          this.saveToCloud();
-        },
-
-        undo() {
-          if (this.historyIndex > 0) {
-            this.historyIndex--;
-            this.applyHistoryState();
-          }
-        },
-
-        redo() {
-          if (this.historyIndex < this.history.length - 1) {
-            this.historyIndex++;
-            this.applyHistoryState();
-          }
-        },
-
-        applyHistoryState() {
-          this.isRestoringHistory = true;
-          const state = JSON.parse(this.history[this.historyIndex]);
-          this.journalNotes = state.journalNotes;
-          this.fixedTimes = state.fixedTimes || defaultFixedTimes;
-          this.fixedSchedule = state.fixedSchedule || [];
-          this.examBlocks = state.examBlocks || defaultExamBlocks;
-          this.examGridSlots = state.examGridSlots || defaultExamGridSlots;
-          this.examGridSchedule = state.examGridSchedule || [];
-          this.subjectTopics = state.subjectTopics || defaultSubjectTopics;
-          this.calendarTasks = state.calendarTasks || {};
-          this.trashBin = state.trashBin || [];
-          this.isRestoringHistory = false;
-          this.saveToCloud();
-        },
-
-        async saveToCloud() {
-          try {
-            if (!window.cloudDB) return;
-            this.syncStatusText = "Syncing...";
-            await window.cloudSetDoc(window.cloudDoc(window.cloudDB, "planners", "med_schedule_data"), {
-              journalNotes: this.journalNotes,
-              fixedTimes: this.fixedTimes,
-              fixedSchedule: this.fixedSchedule,
-              examBlocks: this.examBlocks,
-              examGridSlots: this.examGridSlots,
-              examGridSchedule: this.examGridSchedule,
-              subjectTopics: this.subjectTopics,
-              calendarTasks: this.calendarTasks,
-              trashBin: this.trashBin,
-              lastUpdated: new Date()
-            });
-            this.syncStatusText = "Synced ✨";
-          } catch (e) {
-            console.error("Cloud save error:", e);
-            this.syncStatusText = "Sync Failed ⚠️";
-          }
-          this.generateCalendar();
-        },
-
-        updateClock() {
-          const now = new Date();
-          this.currentTimeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          this.dateHeaderString = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-          const hr = now.getHours();
-          this.timeGreeting = hr < 12 ? "Good morning!" : hr < 18 ? "Good afternoon!" : "Good evening!";
-        },
-
-        getActiveJournal() {
-          return this.journalNotes.find(n => n.id === this.activeJournalId);
-        },
-
-        createNewJournalEntry() {
-          const newNote = { id: uid(), title: 'New Clinical Note', content: '', date: new Date().toLocaleDateString() };
-          this.journalNotes.unshift(newNote);
-          this.activeJournalId = newNote.id;
-          this.recordChange();
-        },
-
-        deleteJournalEntry(id) {
-          const index = this.journalNotes.findIndex(n => n.id === id);
-          if (index !== -1) {
-            const removed = this.journalNotes.splice(index, 1)[0];
-            removed.deletedAt = Date.now();
-            this.trashBin.unshift(removed);
-            
-            if (this.activeJournalId === id) {
-              this.activeJournalId = this.journalNotes.length > 0 ? this.journalNotes[0].id : null;
-            }
-            this.recordChange();
-          }
-        },
-
-        restoreFromTrash(index) {
-          const restored = this.trashBin.splice(index, 1)[0];
-          delete restored.deletedAt;
-          this.journalNotes.push(restored);
-          this.activeJournalId = restored.id;
-          this.recordChange();
-        },
-
-        permanentlyDelete(index) {
-          this.trashBin.splice(index, 1);
-          this.recordChange();
-        },
-
-        emptyTrash() {
-          this.trashBin = [];
-          this.recordChange();
-        },
-
-        addSubjectGroup() {
-          this.subjectTopics.push({ id: uid(), name: "NEW SUBJECT", newTopicText: "", topics: [] });
-          this.recordChange();
-        },
-
-        removeSubjectGroup(sIdx) {
-          this.subjectTopics.splice(sIdx, 1);
-          this.recordChange();
-        },
-
-        addTopicItem(sIdx) {
-          const sub = this.subjectTopics[sIdx];
-          if (!sub.newTopicText || !sub.newTopicText.trim()) return;
-          sub.topics.push({ id: uid(), title: sub.newTopicText.trim(), done: false });
-          sub.newTopicText = "";
-          this.recordChange();
-        },
-
-        removeTopicItem(sIdx, tIdx) {
-          this.subjectTopics[sIdx].topics.splice(tIdx, 1);
-          this.recordChange();
-        },
-
-        getFixedCells(time, day) {
-          return this.fixedSchedule.filter(item => item.time === time && item.day === day);
-        },
-
-        addFixedCell(time, day) {
-          this.fixedSchedule.push({ time, day, subject: "NEW SUBJECT", location: "Location" });
-          this.recordChange();
-        },
-
-        removeFixedCell(time, day, cIdx) {
-          const matches = this.fixedSchedule.filter(item => item.time === time && item.day === day);
-          const target = matches[cIdx];
-          const globalIdx = this.fixedSchedule.indexOf(target);
-          if (globalIdx !== -1) {
-            this.fixedSchedule.splice(globalIdx, 1);
-            this.recordChange();
-          }
-        },
-
-        resetFixedSchedule() {
-          this.fixedTimes = defaultFixedTimes;
-          this.fixedSchedule = defaultFixedSchedule;
-          this.recordChange();
-        },
-
-        addExamTimeSlot() {
-          this.examGridSlots.push({ id: uid(), time: "New Time" });
-          this.recordChange();
-        },
-
-        removeExamTimeSlot(sIndex) {
-          const slot = this.examGridSlots[sIndex];
-          if (slot) {
-            this.examGridSchedule = this.examGridSchedule.filter(item => item.slotId !== slot.id);
-            this.examGridSlots.splice(sIndex, 1);
-            this.recordChange();
-          }
-        },
-
-        getExamGridCellsBySlotId(slotId, day) {
-          return this.examGridSchedule.filter(item => item.slotId === slotId && item.day === day);
-        },
-
-        addExamGridCell(slotId, day) {
-          this.examGridSchedule.push({ slotId, day, subject: "EXAM TITLE", location: "Exam Hall" });
-          this.recordChange();
-        },
-
-        removeExamGridCell(slotId, day, cIdx) {
-          const matches = this.examGridSchedule.filter(item => item.slotId === slotId && item.day === day);
-          const target = matches[cIdx];
-          const globalIdx = this.examGridSchedule.indexOf(target);
-          if (globalIdx !== -1) {
-            this.examGridSchedule.splice(globalIdx, 1);
-            this.recordChange();
-          }
-        },
-
-        addExamBlock() {
-          this.examBlocks.push({ id: uid(), title: "EXAM BLOCK", dateRange: "Date Range", desc: "Description" });
-          this.recordChange();
-        },
-
-        removeExamBlock(bIdx) {
-          this.examBlocks.splice(bIdx, 1);
-          this.recordChange();
-        },
-
-        resetExamSchedule() {
-          this.examBlocks = defaultExamBlocks;
-          this.examGridSlots = defaultExamGridSlots;
-          this.examGridSchedule = defaultExamGridSchedule;
-          this.recordChange();
-        },
-
-        openDayModal(dateStr) {
-          this.modalDate = dateStr;
-          this.newTaskText = '';
-          this.showDayModal = true;
-        },
-
-        getTasksForDate(dateStr) {
-          return this.calendarTasks[dateStr] || [];
-        },
-
-        addCustomTask() {
-          if (!this.newTaskText.trim()) return;
-          if (!this.calendarTasks[this.modalDate]) {
-            this.calendarTasks[this.modalDate] = [];
-          }
-          this.calendarTasks[this.modalDate].push(this.newTaskText.trim());
-          this.newTaskText = '';
-          this.recordChange();
-        },
-
-        removeTaskForDate(dateStr, tIdx) {
-          if (this.calendarTasks[dateStr]) {
-            this.calendarTasks[dateStr].splice(tIdx, 1);
-            if (this.calendarTasks[dateStr].length === 0) {
-              delete this.calendarTasks[dateStr];
-            }
-            this.recordChange();
-          }
-        },
-
-        generateCalendar() {
-          const firstDayIndex = new Date(this.viewYear, this.viewMonth, 1).getDay();
-          const totalDays = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
-          this.calendarMonthName = new Date(this.viewYear, this.viewMonth).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-          
-          let days = [];
-          const prevTotalDays = new Date(this.viewYear, this.viewMonth, 0).getDate();
-          
-          for (let i = firstDayIndex - 1; i >= 0; i--) {
-            const dNum = prevTotalDays - i;
-            days.push({ dayNum: dNum, isCurrentMonth: false, dateStr: '', events: [] });
-          }
-
-          for (let i = 1; i <= totalDays; i++) {
-            const mStr = String(this.viewMonth + 1).padStart(2, '0');
-            const dStr = String(i).padStart(2, '0');
-            const dateString = `${this.viewYear}-${mStr}-${dStr}`;
-            
-            let evs = this.calendarTasks[dateString] || [];
-
-            days.push({ dayNum: i, isCurrentMonth: true, dateStr: dateString, events: evs });
-          }
-
-          const remaining = 42 - days.length;
-          for (let i = 1; i <= remaining; i++) {
-            days.push({ dayNum: i, isCurrentMonth: false, dateStr: '', events: [] });
-          }
-
-          this.calendarDays = days;
-        },
-
-        changeMonth(dir) {
-          this.viewMonth += dir;
-          if (this.viewMonth > 11) {
-            this.viewMonth = 0;
-            this.viewYear++;
-          } else if (this.viewMonth < 0) {
-            this.viewMonth = 11;
-            this.viewYear--;
-          }
-          this.generateCalendar();
-        }
       }
-    }
   </script>
 </body>
 </html>
