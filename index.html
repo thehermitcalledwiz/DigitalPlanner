@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YEAR LEVEL 2 MEDICINE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+    import { getFirestore, doc as fsDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBcFt0qsHouaON_U4k1w_mBlDGdslUt3-U",
+      authDomain: "my-digital-planner-scheduler.firebaseapp.com",
+      projectId: "my-digital-planner-scheduler",
+      storageBucket: "my-digital-planner-scheduler.firebasestorage.app",
+      messagingSenderId: "238183164684",
+      appId: "1:238183164684:web:51ef2928009a2fe1403729",
+      measurementId: "G-G4KVQZMKVC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    // Make database functions globally accessible to Alpine.js safely
+    window.db = db;
+    window.fsDoc = fsDoc;
+    window.setDoc = setDoc;
+    window.getDoc = getDoc;
+    console.log("Firebase Connected Successfully!");
+  </script>
+
+  <style>
+    [x-cloak]{display:none!important}
+    * { scrollbar-width: thin; scrollbar-color: #065f46 #000000; }
+    *::-webkit-scrollbar { width: 6px; height: 6px; }
+    *::-webkit-scrollbar-thumb { background: #065f46; border-radius: 999px; }
+    *::-webkit-scrollbar-track { background: #000000; }
+  </style>
+</head>
+
+<body class="bg-black text-emerald-400 min-h-screen p-2 md:p-4 font-mono selection:bg-emerald-900 selection:text-white" x-data="smartPlannerApp()">
+  <div class="max-w-[1400px] mx-auto bg-black rounded-3xl shadow-2xl shadow-emerald-950/50 border border-emerald-900/60 overflow-hidden flex flex-col md:flex-row h-[95vh]">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="w-full md:w-64 bg-black border-r border-emerald-900/60 flex flex-col justify-between p-4 shrink-0">
+      <div class="space-y-6">
+        <!-- Logo / Brand & Greeting -->
+        <div class="space-y-3 px-2">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-950 border border-emerald-500/50 text-emerald-400 flex items-center justify-center font-bold text-lg shadow-lg shadow-emerald-900/30">M</div>
+            <div>
+              <h1 class="font-extrabold text-emerald-300 tracking-wider text-sm leading-tight">YEAR LEVEL 2 MEDICINE</h1>
+              <p class="text-[11px] text-emerald-500 font-medium" x-text="timeGreeting"></p>
+            </div>
+          </div>
+          <!-- Quote Box -->
+          <div class="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-900/50 text-[11px] text-emerald-400/90 italic text-center">
+            "Chop wood, carry water"
+          </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="space-y-1">
+          <template x-for="item in navItems" :key="item.id">
+            <button @click="currentNav = item.id"
+                    :class="currentNav === item.id ? 'bg-emerald-900/60 text-emerald-200 border border-emerald-500/50 shadow-lg shadow-emerald-950 font-semibold' : 'text-emerald-500 hover:bg-emerald-950/40 hover:text-emerald-300 font-medium border border-transparent'"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left">
+              <span class="text-base" x-text="item.icon"></span>
+              <span x-text="item.label"></span>
+            </button>
+          </template>
+        </nav>
+      </div>
+
+      <!-- Footer Quick Status -->
+      <div class="bg-emerald-950/40 border border-emerald-900/60 rounded-2xl p-3 text-xs text-emerald-300 space-y-1">
+        <div class="font-bold flex items-center justify-between">
+          <span>Cloud Sync Active</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        </div>
+        <p class="text-[11px] text-emerald-500" x-text="syncStatusText">Connected to Firebase</p>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN CONTENT AREA ================= -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-black">
+
+      <!-- Top Header Bar with Global Undo / Redo Buttons -->
+      <header class="h-16 border-b border-emerald-900/60 px-6 flex items-center justify-between shrink-0 bg-black">
+        <div class="flex items-center gap-4">
+          <h2 class="text-lg font-extrabold text-emerald-300 tracking-tight" x-text="dateHeaderString"></h2>
+          <div class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-900" x-text="currentTimeString"></div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Global Undo / Redo Buttons -->
+          <div class="flex items-center bg-emerald-950/40 p-1 rounded-xl border border-emerald-900/80 mr-2">
+            <button @click="performUndo()" :disabled="historyIndex <= 0"
+                    :class="historyIndex <= 0 ? 'opacity-30 cursor-not-allowed text-emerald-700' : 'hover:bg-emerald-900/60 text-emerald-300 shadow-sm'"
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1" title="Undo last action">
+              <span>↺</span> <span class="hidden sm:inline">Undo</span>
+            </button>
+            <div class="w-[1px] h-4 bg-emerald-900 mx-1"></div>
+            <button @click="performRedo()" :disabled="historyIndex >= historyStack.length - 1"
+                    :class="historyIndex >= historyStack.length - 1 ? 'opacity-30 cursor-not-allowed text-emerald-700' : 'hover:bg-emerald-900/60 text-emerald-300 shadow-sm'"
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1" title="Redo action">
+              <span class="hidden sm:inline">Redo</span> <span>↻</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2" x-show="currentNav === 'calendar'">
+            <button @click="prevWeek()" class="w-8 h-8 rounded-lg border border-emerald-900 flex items-center justify-center hover:bg-emerald-950 font-bold text-emerald-400">◀</button>
+            <button @click="todayWeek()" class="px-3 py-1.5 rounded-lg border border-emerald-900 text-xs font-semibold hover:bg-emerald-950 text-emerald-300">Current Week</button>
+            <button @click="nextWeek()" class="w-8 h-8 rounded-lg border border-emerald-900 flex items-center justify-center hover:bg-emerald-950 font-bold text-emerald-400">▶</button>
+            <button @click="openModalForNew()" class="bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold w-9 h-9 rounded-xl flex items-center justify-center shadow-md shadow-emerald-900 text-lg ml-2">+</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ================= VIEW 1: CALENDAR (INTERACTIVE WEEKLY TIMELINE) ================= -->
+      <div class="flex-1 flex flex-col overflow-hidden" x-show="currentNav === 'calendar'">
+        <!-- Filter Pills -->
+        <div class="bg-emerald-950/20 border-b border-emerald-900/60 px-6 py-2.5 flex items-center gap-3 overflow-x-auto shrink-0">
+          <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider shrink-0">Filter Subject:</span>
+          <button @click="selectedFilter = 'ALL'"
+                  :class="selectedFilter === 'ALL' ? 'bg-emerald-500 text-black font-bold shadow-sm' : 'bg-black text-emerald-400 border border-emerald-900 hover:bg-emerald-950/60'"
+                  class="px-3 py-1 rounded-full text-xs transition-all shrink-0">
+            All Subjects
+          </button>
+          <template x-for="subj in subjectsList" :key="subj">
+            <button @click="selectedFilter = subj"
+                    :class="selectedFilter === subj ? 'bg-emerald-500 text-black font-bold shadow-sm' : 'bg-black text-emerald-400 border border-emerald-900 hover:bg-emerald-950/60'"
+                    class="px-3 py-1 rounded-full text-xs transition-all shrink-0"
+                    x-text="subj">
+            </button>
+          </template>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-6">
+          <div class="grid grid-cols-8 border-b border-emerald-900/60 pb-3 sticky top-0 bg-black z-10">
+            <div class="text-xs font-bold text-emerald-600 uppercase tracking-wider text-center pt-2">Time</div>
+            <template x-for="day in currentWeekDays" :key="day.iso">
+              <div class="text-center">
+                <div class="text-xs font-bold text-emerald-600 uppercase" x-text="day.dayName"></div>
+                <div class="text-lg font-extrabold mt-0.5 inline-block px-2.5 py-0.5 rounded-full"
+                     :class="day.isToday ? 'bg-emerald-500 text-black shadow-sm' : 'text-emerald-300'"
+                     x-text="day.dayNum"></div>
+              </div>
+            </template>
+          </div>
+
+          <div class="divide-y divide-emerald-950">
+            <template x-for="hour in hoursList" :key="hour">
+              <div class="grid grid-cols-8 min-h-[85px] group">
+                <div class="p-2 text-right pr-4 text-xs font-semibold text-emerald-600 pt-2 border-r border-emerald-950" x-text="formatHour(hour)"></div>
+                <template x-for="day in currentWeekDays" :key="day.iso">
+                  <div @click="openModalForSlot(day.iso, hour)"
+                       class="p-1 border-r border-emerald-950 last:border-r-0 relative hover:bg-emerald-950/30 cursor-pointer transition-colors group/cell">
+                    <template x-for="ev in getEventsForSlot(day.iso, hour)" :key="ev.id">
+                      <div @click.stop="openModalForEdit(ev)"
+                           class="bg-emerald-950/60 border border-emerald-800/80 text-emerald-200 rounded-xl p-2.5 shadow-sm text-xs flex flex-col justify-between h-full hover:border-emerald-500 transition-all relative overflow-hidden">
+                        <div>
+                          <div class="flex items-center justify-between">
+                            <span class="font-bold truncate tracking-tight text-emerald-200" x-text="ev.title"></span>
+                            <span class="text-[10px] font-semibold text-emerald-500" x-text="ev.timeRange"></span>
+                          </div>
+                          <p class="text-[11px] text-emerald-400/80 mt-1 line-clamp-2 italic" x-text="ev.notes"></p>
+                        </div>
+                        <template x-if="ev.tasks && ev.tasks.length > 0">
+                          <div class="mt-2 pt-1 border-t border-emerald-900/60 flex items-center justify-between text-[10px] font-medium text-emerald-400">
+                            <span x-text="ev.tasks.filter(t=>t.done).length + '/' + ev.tasks.length + ' done'"></span>
+                            <span class="w-1.5 h-1.5 rounded-full" :class="ev.tasks.every(t=>t.done) ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 pointer-events-none">
+                      <span class="text-xs text-emerald-300 font-bold bg-emerald-950 px-2 py-1 rounded-lg border border-emerald-800 shadow-sm">+ Add</span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= VIEW 2: WEEKLY TAB (SUMMARY AGENDA VIEW) ================= -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'weekly'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg">Weekly Agenda & Daily Summary</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Quick day-by-day checklist overview for the current week.</p>
+          </div>
+          <div class="flex gap-2">
+            <button @click="weekOffset--" class="px-3 py-1.5 bg-black border border-emerald-900 text-emerald-300 rounded-xl text-xs font-bold hover:bg-emerald-950">◀ Prev</button>
+            <button @click="weekOffset = 0" class="px-3 py-1.5 bg-black border border-emerald-900 text-emerald-300 rounded-xl text-xs font-bold hover:bg-emerald-950">Current</button>
+            <button @click="weekOffset++" class="px-3 py-1.5 bg-black border border-emerald-900 text-emerald-300 rounded-xl text-xs font-bold hover:bg-emerald-950">Next ▶</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+          <template x-for="day in currentWeekDays" :key="day.iso">
+            <div class="bg-black border border-emerald-900/70 rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex items-center justify-between border-b border-emerald-950 pb-2 mb-3">
+                  <span class="text-xs font-bold uppercase text-emerald-600" x-text="day.dayName"></span>
+                  <span class="text-sm font-extrabold px-2 py-0.5 rounded-lg" :class="day.isToday ? 'bg-emerald-500 text-black' : 'text-emerald-300 bg-emerald-950/60'" x-text="day.dayNum"></span>
+                </div>
+                <div class="space-y-2">
+                  <template x-for="ev in events.filter(e => e.dateISO === day.iso)" :key="ev.id">
+                    <div class="bg-emerald-950/40 border border-emerald-900 rounded-xl p-2.5 text-xs space-y-1">
+                      <div class="font-bold text-emerald-200" x-text="ev.title"></div>
+                      <div class="text-[10px] text-emerald-400 font-semibold" x-text="ev.timeRange"></div>
+                    </div>
+                  </template>
+                  <template x-if="events.filter(e => e.dateISO === day.iso).length === 0">
+                    <div class="text-xs text-emerald-700 italic py-4 text-center">No scheduled blocks</div>
+                  </template>
+                </div>
+              </div>
+              <button @click="openModalForSlot(day.iso, 8)" class="w-full py-1.5 bg-emerald-950/30 hover:bg-emerald-900/50 text-emerald-300 rounded-xl text-xs font-bold border border-emerald-900 transition-colors">+ Add Slot</button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- ================= VIEW 3: CLASSES TAB (YEAR LEVEL 2 SCHEDULE) ================= -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'classes'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg">Year Level 2 Fixed Class Schedule</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Your official standard weekly classes. Click any cell to modify or update topics.</p>
+          </div>
+          <span class="px-3 py-1 bg-emerald-500 text-black rounded-full text-xs font-bold shadow-sm">Fixed Template</span>
+        </div>
+
+        <div class="bg-black border border-emerald-900/70 rounded-2xl shadow-sm overflow-x-auto">
+          <table class="w-full border-collapse min-w-[750px]">
+            <thead>
+              <tr class="bg-emerald-950/40 text-emerald-400 text-xs uppercase tracking-wider border-b border-emerald-900">
+                <th class="p-3 text-left w-28 border-r border-emerald-900">Time</th>
+                <template x-for="dName in ['Monday','Tuesday','Wednesday','Thursday','Friday']" :key="dName">
+                  <th class="p-3 text-center border-r border-emerald-900 last:border-r-0" x-text="dName"></th>
+                </template>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-emerald-950 text-sm">
+              <template x-for="slotRow in fixedClassSlots" :key="slotRow.time">
+                <tr>
+                  <td class="p-3 font-semibold text-emerald-600 bg-emerald-950/20 border-r border-emerald-900 text-xs align-top" x-text="slotRow.time"></td>
+                  <template x-for="dayKey in ['MON','TUE','WED','THU','FRI']" :key="dayKey">
+                    <td @click="openClassEditModal(dayKey, slotRow.time)"
+                        class="p-2 border-r border-emerald-950 last:border-r-0 align-top h-28 relative group bg-black hover:bg-emerald-950/40 cursor-pointer transition-colors">
+                      <template x-if="fixedClasses[dayKey] && fixedClasses[dayKey][slotRow.time]">
+                        <div class="bg-emerald-950/60 border border-emerald-800 rounded-xl p-3 h-full flex flex-col justify-between shadow-sm">
+                          <div>
+                            <span class="font-bold text-emerald-200 text-xs uppercase tracking-wide bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-700"
+                                  x-text="fixedClasses[dayKey][slotRow.time].subject"></span>
+                            <p class="text-xs text-emerald-400/80 mt-2 italic" x-text="fixedClasses[dayKey][slotRow.time].notes"></p>
+                          </div>
+                          <span class="text-[10px] text-emerald-500 font-semibold">Click to edit</span>
+                        </div>
+                      </template>
+                      <template x-if="!fixedClasses[dayKey] || !fixedClasses[dayKey][slotRow.time]">
+                        <div class="h-full w-full flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <span class="text-xs text-emerald-400 font-bold bg-emerald-950 px-2 py-1 rounded border border-emerald-800">+ Add</span>
+                        </div>
+                      </template>
+                    </td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ================= VIEW 4: EXAM WEEK TAB ================= -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'exams'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg">Exam Week Schedule & Dates</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Customizable examination time slots and block dates for the term.</p>
+          </div>
+          <button @click="openAddExamRowModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-bold rounded-xl text-xs shadow-sm">+ Add Time Row</button>
+        </div>
+
+        <!-- Exam Dates Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <template x-for="ex in examBlocksList" :key="ex.name">
+            <div class="bg-black border border-emerald-900/70 rounded-2xl p-4 shadow-sm border-l-4 border-l-emerald-500 space-y-1">
+              <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider" x-text="ex.name"></div>
+              <div class="text-sm font-extrabold text-emerald-200" x-text="ex.dates"></div>
+              <div class="text-[11px] text-emerald-500" x-text="ex.note"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Fully Editable Exam Week Grid Template -->
+        <div class="bg-black border border-emerald-900/70 rounded-2xl shadow-sm overflow-x-auto">
+          <div class="p-4 border-b border-emerald-950 font-bold text-emerald-300 text-sm flex items-center justify-between">
+            <span>Exam Week Daily Grid Template (Click any slot or time label to edit)</span>
+          </div>
+          <table class="w-full border-collapse min-w-[750px]">
+            <thead>
+              <tr class="bg-emerald-950/40 text-emerald-400 text-xs uppercase tracking-wider border-b border-emerald-900">
+                <th class="p-3 text-left w-36 border-r border-emerald-900">Time Slot</th>
+                <template x-for="dName in ['Monday','Tuesday','Wednesday','Thursday','Friday']" :key="dName">
+                  <th class="p-3 text-center border-r border-emerald-900 last:border-r-0" x-text="dName"></th>
+                </template>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-emerald-950 text-sm">
+              <template x-for="(timeSlot, rowIndex) in examTimeSlots" :key="timeSlot">
+                <tr>
+                  <td class="p-3 font-semibold text-emerald-400 bg-emerald-950/20 border-r border-emerald-900 text-xs align-top flex items-center justify-between group/timerow">
+                    <span @click="openEditExamRowModal(rowIndex, timeSlot)" class="cursor-pointer hover:underline font-bold" title="Click to edit time slot name" x-text="timeSlot"></span>
+                    <div class="flex items-center gap-1 opacity-80 group-hover/timerow:opacity-100">
+                      <button @click="openEditExamRowModal(rowIndex, timeSlot)" class="text-emerald-400 hover:text-emerald-200 text-[11px]" title="Edit time">✏️</button>
+                      <button @click="removeExamRow(rowIndex)" class="text-emerald-600 hover:text-emerald-400 font-bold text-xs" title="Remove time slot">×</button>
+                    </div>
+                  </td>
+                  <template x-for="dayKey in ['MON','TUE','WED','THU','FRI']" :key="dayKey">
+                    <td @click="openExamEditModal(dayKey, timeSlot)"
+                        class="p-2 border-r border-emerald-950 last:border-r-0 align-top h-28 relative group bg-black hover:bg-emerald-950/40 cursor-pointer transition-colors">
+                      <template x-if="fixedExams[dayKey] && fixedExams[dayKey][timeSlot]">
+                        <div class="bg-emerald-950/60 border border-emerald-800 rounded-xl p-3 h-full flex flex-col justify-between shadow-sm">
+                          <div>
+                            <span class="font-bold text-emerald-200 text-xs uppercase tracking-wide bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-700"
+                                  x-text="fixedExams[dayKey][timeSlot].subject"></span>
+                            <p class="text-xs text-emerald-400/80 mt-2 italic" x-text="fixedExams[dayKey][timeSlot].notes"></p>
+                          </div>
+                          <span class="text-[10px] text-emerald-500 font-semibold">Click to edit</span>
+                        </div>
+                      </template>
+                      <template x-if="!fixedExams[dayKey] || !fixedExams[dayKey][timeSlot]">
+                        <div class="h-full w-full flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <span class="text-xs text-emerald-400 font-bold bg-emerald-950 px-2 py-1 rounded border border-emerald-800">+ Add</span>
+                        </div>
+                      </template>
+                    </td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ================= VIEW 5: JOURNAL TAB ================= -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'journal'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg">Medical Study Journal & Quick Notes</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Jot down clinical correlations, high-yield reminders, or personal reflections.</p>
+          </div>
+          <button @click="createNewJournalEntry()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ New Note</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Sidebar Note List -->
+          <div class="space-y-2 md:col-span-1 max-h-[60vh] overflow-y-auto pr-2">
+            <template x-for="note in journalNotes" :key="note.id">
+              <div @click="activeJournalId = note.id"
+                   :class="activeJournalId === note.id ? 'bg-emerald-950 border-emerald-500' : 'bg-black border-emerald-900/60 hover:bg-emerald-950/30'"
+                   class="border rounded-xl p-3.5 cursor-pointer transition-all space-y-1 group relative">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs text-emerald-200 truncate" x-text="note.title || 'Untitled Note'"></span>
+                  <button @click.stop="deleteJournalNote(note.id)" class="text-emerald-700 hover:text-emerald-400 opacity-0 group-hover:opacity-100 text-xs">×</button>
+                </div>
+                <p class="text-[11px] text-emerald-500 truncate" x-text="note.content || 'Empty note...'"></p>
+                <div class="text-[9px] text-emerald-600 pt-1" x-text="note.date"></div>
+              </div>
+            </template>
+            <template x-if="journalNotes.length === 0">
+              <div class="text-center text-xs text-emerald-600 py-8 italic">No journal entries yet. Click "+ New Note" to start.</div>
+            </template>
+          </div>
+
+          <!-- Main Note Editor -->
+          <div class="md:col-span-2 bg-black border border-emerald-900/80 rounded-2xl p-4 flex flex-col h-[60vh]">
+            <template x-if="getActiveJournal()">
+              <div class="flex flex-col h-full space-y-4">
+                <input type="text" x-model="getActiveJournal().title" @input="saveJournalNotes()" placeholder="Note Title..."
+                       class="w-full bg-black border border-emerald-900 rounded-xl px-4 py-2.5 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
+                <textarea x-model="getActiveJournal().content" @input="saveJournalNotes()" placeholder="Write your clinical notes, schema details, or reflections here..."
+                          class="w-full flex-1 bg-black border border-emerald-900 rounded-xl p-4 text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 resize-none font-mono"></textarea>
+                <div class="flex items-center justify-between text-[11px] text-emerald-600 pt-2 border-t border-emerald-950">
+                  <span x-text="'Last updated: ' + getActiveJournal().date"></span>
+                  <span class="text-emerald-500 font-semibold" x-text="syncStatusText">Auto-saved</span>
+                </div>
+              </div>
+            </template>
+            <template x-if="!getActiveJournal()">
+              <div class="h-full flex items-center justify-center text-xs text-emerald-600 italic">
+                Select a note from the left or create a new one to begin writing.
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ================= MODAL FOR CALENDAR EVENTS ================= -->
+  <div x-show="modal.open" x-cloak
+       class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+       @click.self="closeModal()">
+    <div class="bg-black rounded-2xl shadow-2xl max-w-md w-full border border-emerald-900 overflow-hidden">
+      <div class="px-6 py-4 border-b border-emerald-900 flex items-center justify-between bg-emerald-950/40">
+        <h3 class="font-bold text-emerald-200" x-text="modal.isEdit ? 'Edit Schedule Block' : 'New Schedule Block'"></h3>
+        <button @click="closeModal()" class="text-emerald-500 hover:text-emerald-300 text-xl font-bold">×</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Subject / Title</label>
+          <input type="text" x-model="modal.title" placeholder="e.g. Pathology, Internal Med"
+                 class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Date</label>
+            <input type="date" x-model="modal.dateISO"
+                   class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Start Hour</label>
+            <select x-model.number="modal.hour"
+                    class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+              <template x-for="h in hoursList" :key="h">
+                <option :value="h" x-text="formatHour(h)"></option>
+              </template>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Time Label</label>
+            <input type="text" x-model="modal.timeRange" placeholder="e.g. 08:00 - 10:00 AM"
+                   class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Color Theme</label>
+            <select x-model="modal.color"
+                    class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+              <option value="emerald">Emerald Green</option>
+              <option value="dark">Dark Terminal</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Room / Notes</label>
+          <input type="text" x-model="modal.notes" placeholder="e.g. Lecture Hall B"
+                 class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Topics & Checklist</label>
+          <div class="flex gap-2 mb-2">
+            <input type="text" x-model="modal.newTaskText" @keydown.enter.prevent="addTaskItem()" placeholder="Add task or reading..."
+                   class="flex-1 bg-black border border-emerald-900 rounded-xl px-3 py-2 text-xs text-emerald-200 focus:outline-none focus:border-emerald-500">
+            <button @click="addTaskItem()" type="button" class="bg-emerald-600 text-black font-bold px-3 py-2 rounded-xl text-xs hover:bg-emerald-500">Add</button>
+          </div>
+          <div class="space-y-1.5 max-h-32 overflow-y-auto">
+            <template x-for="(task, idx) in modal.tasks" :key="idx">
+              <div class="flex items-center justify-between bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-900 text-xs">
+                <label class="flex items-center gap-2 flex-1 cursor-pointer">
+                  <input type="checkbox" x-model="task.done" class="rounded border-emerald-900 bg-black text-emerald-500">
+                  <span x-text="task.text" :class="task.done ? 'line-through text-emerald-700' : 'text-emerald-300'"></span>
+                </label>
+                <button @click="modal.tasks.splice(idx, 1)" class="text-emerald-600 hover:text-emerald-400 font-bold">×</button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-4 border-t border-emerald-900">
+          <button @click="deleteCurrentEvent()" x-show="modal.isEdit" type="button" class="text-emerald-500 hover:text-emerald-300 text-xs font-bold hover:underline">Delete Block</button>
+          <div class="flex gap-2 ml-auto">
+            <button @click="closeModal()" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold text-emerald-500 hover:bg-emerald-950">Cancel</button>
+            <button @click="saveEvent()" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-black hover:bg-emerald-500 shadow-sm">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL FOR FIXED CLASSES & EXAMS EDIT ================= -->
+  <div x-show="fixedModal.open" x-cloak
+       class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+       @click.self="closeFixedModal()">
+    <div class="bg-black rounded-2xl shadow-2xl max-w-sm w-full border border-emerald-900 overflow-hidden">
+      <div class="px-6 py-4 border-b border-emerald-900 flex items-center justify-between bg-emerald-950/40">
+        <h3 class="font-bold text-emerald-200 text-sm" x-text="fixedModal.title"></h3>
+        <button @click="closeFixedModal()" class="text-emerald-500 hover:text-emerald-300 text-xl font-bold">×</button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Subject Name</label>
+          <input type="text" x-model="fixedModal.subject" placeholder="e.g. Patho, Micro, Pedia"
+                 class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Notes / Room</label>
+          <input type="text" x-model="fixedModal.notes" placeholder="e.g. Lecture Hall A"
+                 class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+        </div>
+        <div class="flex items-center justify-between pt-4 border-t border-emerald-900">
+          <button @click="clearFixedSlot()" type="button" class="text-emerald-500 hover:text-emerald-300 text-xs font-bold hover:underline">Clear Slot</button>
+          <div class="flex gap-2">
+            <button @click="closeFixedModal()" type="button" class="px-3 py-2 rounded-xl text-xs font-semibold text-emerald-500 hover:bg-emerald-950">Cancel</button>
+            <button @click="saveFixedSlot()" type="button" class="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-black hover:bg-emerald-500 shadow-sm">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL FOR ADDING / EDITING EXAM TIME ROW ================= -->
+  <div x-show="examRowModalOpen" x-cloak
+       class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+       @click.self="examRowModalOpen = false">
+    <div class="bg-black rounded-2xl shadow-2xl max-w-xs w-full border border-emerald-900 overflow-hidden">
+      <div class="px-6 py-4 border-b border-emerald-900 flex items-center justify-between bg-emerald-950/40">
+        <h3 class="font-bold text-emerald-200 text-sm" x-text="isEditingExamRow ? 'Edit Exam Time Slot' : 'Add Exam Time Slot'"></h3>
+        <button @click="examRowModalOpen = false" class="text-emerald-500 hover:text-emerald-300 text-xl font-bold">×</button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-emerald-500 uppercase mb-1">Time Label</label>
+          <input type="text" x-model="newExamTimeSlotText" placeholder="e.g. 1-3 or 2-4 PM"
+                 class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-500">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button @click="examRowModalOpen = false" type="button" class="px-3 py-2 rounded-xl text-xs font-semibold text-emerald-500 hover:bg-emerald-950">Cancel</button>
+          <button @click="saveExamRow()" type="button" class="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-black hover:bg-emerald-500 shadow-sm" x-text="isEditingExamRow ? 'Update' : 'Add Row'"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+function smartPlannerApp() {
+  const pad2 = (n) => String(n).padStart(2,'0');
+  const toISO = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const uid = () => Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+
+  const defaultFixedClasses = {
+    MON: {
+      '8-10': { subject: 'Patho', notes: 'Lecture Hall' },
+      '10-12': { subject: 'Patho', notes: 'Lecture Hall' },
+      '1-3': { subject: 'BPharm', notes: 'Main Building' },
+      '3-5': { subject: 'Patho', notes: 'Lecture Hall' }
+    },
+    TUE: {
+      '8-10': { subject: 'IMPD', notes: 'Main Building' },
+      '1-3': { subject: 'FCM2', notes: 'Discussion Room' },
+      '3-5': { subject: 'NS2-Neuro', notes: 'Lab Room' }
+    },
+    WED: {
+      '8-10': { subject: 'Micro', notes: 'Microbio Lab' },
+      '10-12': { subject: 'Micro', notes: 'Microbio Lab' },
+      '1-3': { subject: 'Patho', notes: 'Lecture Hall' },
+      '3-5': { subject: 'Patho', notes: 'Lecture Hall' }
+    },
+    THU: {
+      '8-10': { subject: 'Micro', notes: 'Microbio Lab' },
+      '10-12': { subject: 'Micro', notes: 'Microbio Lab' },
+      '1-3': { subject: 'IMPD', notes: 'Main Building' },
+      '3-5': { subject: 'IMPD', notes: 'Main Building' }
+    },
+    FRI: {
+      '8-10': { subject: 'Pedia1', notes: 'Pediatrics Ward' },
+      '10-12': { subject: 'MS2', notes: 'Lecture Hall' },
+      '1-3': { subject: 'BPharm', notes: 'Main Building' },
+      '3-5': { subject: 'BPharm', notes: 'Main Building' }
+    }
+  };
+
+  const defaultFixedExams = {
+    MON: {
+      '8-10': { subject: 'Pedia', notes: 'Exam Hall 1' },
+      '10-12': { subject: 'Patho', notes: 'Exam Hall 1' }
+    },
+    TUE: {
+      '8-10': { subject: 'IMPD', notes: 'Exam Hall 1' },
+      '10-12': { subject: 'NS2', notes: 'Exam Hall 1' }
+    },
+    WED: {
+      '8-10': { subject: 'Micro', notes: 'Exam Hall 1' }
+    },
+    THU: {
+      '8-10': { subject: 'FCM2', notes: 'Exam Hall 1' }
+    },
+    FRI: {
+      '8-10': { subject: 'MS2', notes: 'Exam Hall 1' },
+      '10-12': { subject: 'BPharm', notes: 'Exam Hall 1' }
+    }
+  };
+
+  const defaultEvents = [
+    { id: uid(), title: 'Pathology Lecture', dateISO: toISO(new Date()), hour: 8, timeRange: '08:00 - 10:00 AM', color: 'emerald', notes: 'Lecture Hall A', tasks: [{text:'Read Robbins Ch. 4', done:true}] }
+  ];
+
+  const defaultJournalNotes = [
+    { id: uid(), title: 'Cardiology High-Yield', content: 'Remember pressure-volume loops during heart failure and compensatory mechanisms.', date: new Date().toLocaleDateString() }
+  ];
+
+  return {
+    currentNav: 'calendar',
+    selectedFilter: 'ALL',
+    currentTimeString: '',
+    dateHeaderString: '',
+    timeGreeting: '',
+    weekOffset: 0,
+    syncStatusText: 'Loading from Cloud...',
+    
+    navItems: [
+      { id: 'calendar', label: 'Calendar Grid', icon: '📅' },
+      { id: 'weekly', label: 'Weekly Tab', icon: '📆' },
+      { id: 'classes', label: 'Classes (Year 2)', icon: '🗓️' },
+      { id: 'exams', label: 'Exam Week', icon: '📝' },
+      { id: 'journal', label: 'Journal Notes', icon: '📓' }
+    ],
+
+    subjectsList: ['Pathology', 'Internal Med', 'Pharmacology', 'Pediatrics', 'Surgery', 'Microbiology', 'IMPD', 'Micro', 'BPharm', 'FCM2', 'NS2', 'MS2'],
+    hoursList: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+
+    fixedClassSlots: [
+      { time: '8-10' },
+      { time: '10-12' },
+      { time: '1-3' },
+      { time: '3-5' }
+    ],
+
+    examTimeSlots: ['8-10', '10-12'],
+    examRowModalOpen: false,
+    isEditingExamRow: false,
+    editingExamRowIndex: null,
+    newExamTimeSlotText: '',
+
+    examBlocksList: [
+      { name: 'Exam 1', dates: 'Aug 24 - 28, 2026', note: 'First quarter evaluation' },
+      { name: 'Exam 2', dates: 'Sep 28 - Oct 2, 2026', note: 'Second quarter evaluation' },
+      { name: 'Exam 3', dates: 'Oct 26 - 30, 2026', note: 'Third quarter evaluation' },
+      { name: 'Exam 4', dates: 'Dec 1 - 7, 2026', note: 'Final quarter evaluation' },
+      { name: 'Sem Exam', dates: 'Dec 9 - 11, 2026', note: 'Semester Examination' }
+    ],
+
+    events: defaultEvents,
+    fixedClasses: defaultFixedClasses,
+    fixedExams: defaultFixedExams,
+    journalNotes: defaultJournalNotes,
+    activeJournalId: null,
+
+    // Undo / Redo History Stack
+    historyStack: [],
+    historyIndex: -1,
+    isPerformingHistoryAction: false,
+
+    modal: {
+      open: false, isEdit: false, id: null, title: '', dateISO: toISO(new Date()), hour: 8, timeRange: '08:00 - 10:00 AM', color: 'emerald', notes: '', tasks: [], newTaskText: ''
+    },
+
+    fixedModal: {
+      open: false, type: '', day: '', slot: '', subject: '', notes: '', title: ''
+    },
+
+    async init() {
+      this.updateClock();
+      setInterval(() => this.updateClock(), 1000);
+      await this.loadFromCloud();
+    },
+
+    async loadFromCloud() {
+      try {
+        const docSnap = await window.getDoc(window.fsDoc(window.db, "planners", "med_schedule_data"));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          this.events = data.events || defaultEvents;
+          this.fixedClasses = data.fixedClasses || defaultFixedClasses;
+          this.fixedExams = data.fixedExams || defaultFixedExams;
+          this.examTimeSlots = data.examTimeSlots || ['8-10', '10-12'];
+          this.journalNotes = data.journalNotes || defaultJournalNotes;
+          this.syncStatusText = "Synced with Firebase ✨";
+        } else {
+          this.syncStatusText = "New Cloud Setup Created ✨";
+          this.saveToCloud();
+        }
+      } catch (e) {
+        console.error("Cloud load error:", e);
+        this.syncStatusText = "Offline / Local Mode";
+      }
+      if (this.journalNotes.length > 0 && !this.activeJournalId) {
+        this.activeJournalId = this.journalNotes[0].id;
+      }
+      this.pushHistoryState('Initial State Loaded');
+    },
+
+    async saveToCloud() {
+      try {
+        this.syncStatusText = "Syncing...";
+        await window.setDoc(window.fsDoc(window.db, "planners", "med_schedule_data"), {
+          events: this.events,
+          fixedClasses: this.fixedClasses,
+          fixedExams: this.fixedExams,
+          examTimeSlots: this.examTimeSlots,
+          journalNotes: this.journalNotes,
+          lastUpdated: new Date()
+        });
+        this.syncStatusText = "Synced with Firebase ✨";
+      } catch (e) {
+        console.error("Cloud save error:", e);
+        this.syncStatusText = "Sync Failed ⚠️";
+      }
+    },
+
+    updateClock() {
+      const now = new Date();
+      this.currentTimeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      this.dateHeaderString = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+      
+      const hr = now.getHours();
+      if (hr < 12) this.timeGreeting = "Good morning!";
+      else if (hr < 18) this.timeGreeting = "Good afternoon!";
+      else this.timeGreeting = "Good evening!";
+    },
+
+    pushHistoryState(actionLabel) {
+      if (this.isPerformingHistoryAction) return;
+      if (this.historyIndex < this.historyStack.length - 1) {
+        this.historyStack = this.historyStack.slice(0, this.historyIndex + 1);
+      }
+      const snapshot = {
+        label: actionLabel,
+        events: JSON.parse(JSON.stringify(this.events)),
+        fixedClasses: JSON.parse(JSON.stringify(this.fixedClasses)),
+        fixedExams: JSON.parse(JSON.stringify(this.fixedExams)),
+        examTimeSlots: [...this.examTimeSlots],
+        journalNotes: JSON.parse(JSON.stringify(this.journalNotes))
+      };
+      this.historyStack.push(snapshot);
+      if (this.historyStack.length > 25) {
+        this.historyStack.shift();
+      } else {
+        this.historyIndex = this.historyStack.length - 1;
+      }
+      this.saveToCloud();
+    },
+
+    performUndo() {
+      if (this.historyIndex <= 0) return;
+      this.historyIndex--;
+      this.applyHistoryState(this.historyIndex);
+    },
+
+    performRedo() {
+      if (this.historyIndex >= this.historyStack.length - 1) return;
+      this.historyIndex++;
+      this.applyHistoryState(this.historyIndex);
+    },
+
+    applyHistoryState(index) {
+      const target = this.historyStack[index];
+      if (!target) return;
+      this.isPerformingHistoryAction = true;
+      this.events = JSON.parse(JSON.stringify(target.events));
+      this.fixedClasses = JSON.parse(JSON.stringify(target.fixedClasses));
+      this.fixedExams = JSON.parse(JSON.stringify(target.fixedExams));
+      this.examTimeSlots = [...target.examTimeSlots];
+      if (target.journalNotes) {
+        this.journalNotes = JSON.parse(JSON.stringify(target.journalNotes));
+      }
+      this.saveToCloud();
+      this.isPerformingHistoryAction = false;
+    },
+
+    formatHour(h) {
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hr12 = h % 12 === 0 ? 12 : h % 12;
+      return `${hr12}:00 ${ampm}`;
+    },
+
+    get currentWeekDays() {
+      const now = new Date();
+      now.setDate(now.getDate() + (this.weekOffset * 7));
+      const dayOfWeek = now.getDay();
+      const mondayDiff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const monday = new Date(now.setDate(mondayDiff));
+      
+      const days = [];
+      const todayISO = toISO(new Date());
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const iso = toISO(d);
+        days.push({
+          dayName: d.toLocaleDateString(undefined, { weekday: 'short' }),
+          dayNum: d.getDate(),
+          iso: iso,
+          isToday: iso === todayISO
+        });
+      }
+      return days;
+    },
+
+    prevWeek() { this.weekOffset--; },
+    nextWeek() { this.weekOffset++; },
+    todayWeek() { this.weekOffset = 0; },
+
+    getEventsForSlot(dateISO, hour) {
+      return this.events.filter(ev => {
+        if (ev.dateISO !== dateISO || ev.hour !== hour) return false;
+        if (this.selectedFilter !== 'ALL' && !ev.title.toLowerCase().includes(this.selectedFilter.toLowerCase())) return false;
+        return true;
+      });
+    },
+
+    openModalForSlot(dateISO, hour) {
+      this.modal = {
+        open: true, isEdit: false, id: null, title: '', dateISO: dateISO, hour: hour, timeRange: `${this.formatHour(hour)} - ${this.formatHour(hour+2)}`, color: 'emerald', notes: '', tasks: [], newTaskText: ''
+      };
+    },
+
+    openModalForNew() { this.openModalForSlot(toISO(new Date()), 8); },
+
+    openModalForEdit(ev) {
+      this.modal = {
+        open: true, isEdit: true, id: ev.id, title: ev.title, dateISO: ev.dateISO, hour: ev.hour, timeRange: ev.timeRange, color: ev.color || 'emerald', notes: ev.notes || '', tasks: JSON.parse(JSON.stringify(ev.tasks || [])), newTaskText: ''
+      };
+    },
+
+    closeModal() { this.modal.open = false; },
+
+    addTaskItem() {
+      const txt = (this.modal.newTaskText || '').trim();
+      if (!txt) return;
+      this.modal.tasks.push({ text: txt, done: false });
+      this.modal.newTaskText = '';
+    },
+
+    saveEvent() {
+      if (!this.modal.title.trim()) return;
+      if (this.modal.isEdit) {
+        const idx = this.events.findIndex(e => e.id === this.modal.id);
+        if (idx !== -1) {
+          this.events[idx] = { ...this.events[idx], title: this.modal.title.trim(), dateISO: this.modal.dateISO, hour: Number(this.modal.hour), timeRange: this.modal.timeRange, color: this.modal.color, notes: this.modal.notes.trim(), tasks: this.modal.tasks };
+          this.pushHistoryState(`Edit event: ${this.modal.title.trim()}`);
+        }
+      } else {
+        this.events.push({ id: uid(), title: this.modal.title.trim(), dateISO: this.modal.dateISO, hour: Number(this.modal.hour), timeRange: this.modal.timeRange, color: this.modal.color, notes: this.modal.notes.trim(), tasks: this.modal.tasks });
+        this.pushHistoryState(`Add event: ${this.modal.title.trim()}`);
+      }
+      this.closeModal();
+    },
+
+    deleteCurrentEvent() {
+      if (!confirm("Delete this schedule block?")) return;
+      this.events = this.events.filter(e => e.id !== this.modal.id);
+      this.pushHistoryState('Delete schedule block');
+      this.closeModal();
+    },
+
+    openClassEditModal(day, slot) {
+      this.fixedModal = {
+        open: true, type: 'classes', day, slot,
+        title: `Edit Class (${day} ${slot})`,
+        subject: this.fixedClasses[day]?.[slot]?.subject || '',
+        notes: this.fixedClasses[day]?.[slot]?.notes || ''
+      };
+    },
+
+    openExamEditModal(day, slot) {
+      this.fixedModal = {
+        open: true, type: 'exams', day, slot,
+        title: `Edit Exam Slot (${day} ${slot})`,
+        subject: this.fixedExams[day]?.[slot]?.subject || '',
+        notes: this.fixedExams[day]?.[slot]?.notes || ''
+      };
+    },
+
+    closeFixedModal() { this.fixedModal.open = false; },
+
+    saveFixedSlot() {
+      const { type, day, slot, subject, notes } = this.fixedModal;
+      const targetObj = type === 'classes' ? this.fixedClasses : this.fixedExams;
+      if (!targetObj[day]) targetObj[day] = {};
+      if (!subject.trim()) {
+        delete targetObj[day][slot];
+        this.pushHistoryState(`Clear ${type} slot (${day} ${slot})`);
+      } else {
+        targetObj[day][slot] = { subject: subject.trim(), notes: notes.trim() };
+        this.pushHistoryState(`Update ${type} slot (${day} ${slot})`);
+      }
+      this.closeFixedModal();
+    },
+
+    clearFixedSlot() {
+      const { type, day, slot } = this.fixedModal;
+      const targetObj = type === 'classes' ? this.fixedClasses : this.fixedExams;
+      if (targetObj[day]) delete targetObj[day][slot];
+      this.pushHistoryState(`Clear ${type} slot (${day} ${slot})`);
+      this.closeFixedModal();
+    },
+
+    openAddExamRowModal() {
+      this.isEditingExamRow = false;
+      this.editingExamRowIndex = null;
+      this.newExamTimeSlotText = '';
+      this.examRowModalOpen = true;
+    },
+
+    openEditExamRowModal(index, currentSlotText) {
+      this.isEditingExamRow = true;
+      this.editingExamRowIndex = index;
+      this.newExamTimeSlotText = currentSlotText;
+      this.examRowModalOpen = true;
+    },
+
+    saveExamRow() {
+      const slotTxt = this.newExamTimeSlotText.trim();
+      if (!slotTxt) return;
+      if (this.isEditingExamRow && this.editingExamRowIndex !== null) {
+        const oldSlot = this.examTimeSlots[this.editingExamRowIndex];
+        if (oldSlot !== slotTxt) {
+          this.examTimeSlots[this.editingExamRowIndex] = slotTxt;
+          ['MON', 'TUE', 'WED', 'THU', 'FRI'].forEach(d => {
+            if (this.fixedExams[d] && this.fixedExams[d][oldSlot]) {
+              this.fixedExams[d][slotTxt] = this.fixedExams[d][oldSlot];
+              delete this.fixedExams[d][oldSlot];
+            }
+          });
+          this.pushHistoryState(`Edit exam time slot to ${slotTxt}`);
+        }
+      } else {
+        if (!this.examTimeSlots.includes(slotTxt)) {
+          this.examTimeSlots.push(slotTxt);
+          this.pushHistoryState(`Add exam time slot ${slotTxt}`);
+        }
+      }
+      this.examRowModalOpen = false;
+    },
+
+    removeExamRow(index) {
+      if (!confirm("Remove this entire exam time row?")) return;
+      const removedSlot = this.examTimeSlots.splice(index, 1)[0];
+      ['MON', 'TUE', 'WED', 'THU', 'FRI'].forEach(d => {
+        if (this.fixedExams[d]) delete this.fixedExams[d][removedSlot];
+      });
+      this.pushHistoryState(`Remove exam time row ${removedSlot}`);
+    },
+
+    // Journal Management Methods
+    getActiveJournal() {
+      return this.journalNotes.find(n => n.id === this.activeJournalId);
+    },
+
+    createNewJournalEntry() {
+      const newNote = {
+        id: uid(),
+        title: 'New Clinical Note',
+        content: '',
+        date: new Date().toLocaleDateString()
+      };
+      this.journalNotes.unshift(newNote);
+      this.activeJournalId = newNote.id;
+      this.pushHistoryState('Create new journal note');
+    },
+
+    deleteJournalNote(id) {
+      if (!confirm("Delete this journal note?")) return;
+      this.journalNotes = this.journalNotes.filter(n => n.id !== id);
+      if (this.activeJournalId === id) {
+        this.activeJournalId = this.journalNotes.length > 0 ? this.journalNotes[0].id : null;
+      }
+      this.pushHistoryState('Delete journal note');
+    },
+
+    saveJournalNotes() {
+      const active = this.getActiveJournal();
+      if (active) {
+        active.date = new Date().toLocaleDateString();
+      }
+      this.saveToCloud();
+    }
+  }
+}
+</script>
+</body>
+</html>
