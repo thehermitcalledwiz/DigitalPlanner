@@ -229,18 +229,18 @@
                   <template x-for="day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']" :key="day">
                     <td class="p-2 align-top">
                       <div class="space-y-1">
-                        <template x-for="(cell, cIdx) in getExamGridCells(slotItem.time, day)" :key="cIdx">
+                        <template x-for="(cell, cIdx) in getExamGridCellsBySlotId(slotItem.id, day)" :key="cIdx">
                           <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2.5 space-y-1.5 hover:border-emerald-600 transition-all">
                             <input type="text" x-model="cell.subject" @input="recordChange()" placeholder="Exam Name..." 
                                    class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
                             <input type="text" x-model="cell.location" @input="recordChange()" placeholder="Room / Hall..." 
                                    class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-[10px] text-emerald-400 focus:outline-none focus:border-emerald-500">
                             <div class="flex justify-end">
-                              <button @click="removeExamGridCell(slotItem.time, day, cIdx)" class="text-[9px] text-red-400 hover:text-red-300">Remove</button>
+                              <button @click="removeExamGridCell(slotItem.id, day, cIdx)" class="text-[9px] text-red-400 hover:text-red-300">Remove</button>
                             </div>
                           </div>
                         </template>
-                        <button @click="addExamGridCell(slotItem.time, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add Exam</button>
+                        <button @click="addExamGridCell(slotItem.id, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add Exam</button>
                       </div>
                     </td>
                   </template>
@@ -259,7 +259,7 @@
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
             <h3 class="font-bold text-emerald-300 text-lg" x-text="calendarMonthName"></h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Master academic timeline and monthly schedule grid.</p>
+            <p class="text-xs text-emerald-500 mt-0.5">Master academic timeline and monthly schedule grid. Click any date to add tasks/events.</p>
           </div>
           <div class="flex gap-2">
             <button @click="changeMonth(-1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">&larr; Prev</button>
@@ -272,13 +272,21 @@
             <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
           </div>
           <div class="grid grid-cols-7 gap-2">
-            <template x-for="day in calendarDays" :key="day.dateStr">
-              <div :class="day.isCurrentMonth ? 'bg-black border-emerald-900' : 'bg-emerald-950/10 border-emerald-950/40 opacity-40'"
-                   class="border rounded-xl p-2.5 h-24 flex flex-col justify-between overflow-hidden">
-                <div class="text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
-                <div class="space-y-1 overflow-y-auto">
-                  <template x-for="ev in day.events">
-                    <div class="text-[9px] bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 px-1.5 py-0.5 rounded truncate" x-text="ev"></div>
+            <template x-for="day in calendarDays" :key="day.dateStr || Math.random()">
+              <div @click="day.dateStr && openDayModal(day.dateStr)"
+                   :class="day.isCurrentMonth ? 'bg-black border-emerald-900 hover:border-emerald-500 cursor-pointer' : 'bg-emerald-950/10 border-emerald-950/40 opacity-40'"
+                   class="border rounded-xl p-2 h-28 flex flex-col justify-between overflow-hidden transition-all">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
+                  <template x-if="day.dateStr">
+                    <span class="text-[9px] text-emerald-600">+ Add</span>
+                  </template>
+                </div>
+                <div class="space-y-1 overflow-y-auto flex-1 mt-1">
+                  <template x-for="(ev, eIdx) in day.events" :key="eIdx">
+                    <div class="text-[9px] bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 px-1.5 py-0.5 rounded truncate flex items-center justify-between group">
+                      <span x-text="ev"></span>
+                    </div>
                   </template>
                 </div>
               </div>
@@ -320,6 +328,34 @@
       </div>
 
     </main>
+  </div>
+
+  <!-- CALENDAR TASK MODAL -->
+  <div x-show="showDayModal" x-cloak class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-black border border-emerald-900 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl shadow-emerald-950">
+      <div class="flex items-center justify-between border-b border-emerald-900 pb-3">
+        <h3 class="text-emerald-300 font-bold text-sm" x-text="'Manage Tasks & Events for ' + modalDate"></h3>
+        <button @click="showDayModal = false" class="text-red-400 text-xs font-bold hover:text-red-300">Close</button>
+      </div>
+
+      <div class="space-y-2 max-h-60 overflow-y-auto">
+        <template x-for="(task, tIdx) in getTasksForDate(modalDate)" :key="tIdx">
+          <div class="bg-emerald-950/40 border border-emerald-900/60 rounded-xl p-2.5 flex items-center justify-between text-xs">
+            <span class="text-emerald-200" x-text="task"></span>
+            <button @click="removeTaskForDate(modalDate, tIdx)" class="text-red-400 hover:text-red-300 text-[10px]">Delete</button>
+          </div>
+        </template>
+        <template x-if="getTasksForDate(modalDate).length === 0">
+          <div class="text-xs text-emerald-600 italic text-center py-4">No custom tasks for this date.</div>
+        </template>
+      </div>
+
+      <div class="space-y-2 pt-2 border-t border-emerald-900">
+        <input type="text" x-model="newTaskText" placeholder="Add task or event..." @keyup.enter="addCustomTask()"
+               class="w-full bg-black border border-emerald-900 rounded-xl px-3 py-2 text-xs text-emerald-200 focus:outline-none focus:border-emerald-500">
+        <button @click="addCustomTask()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Task</button>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -383,20 +419,23 @@
         { id: uid(), title: "SEM EXAM", dateRange: "Dec 9 - 11, 2026", desc: "Semester Examination" }
       ];
 
+      const slotId1 = uid();
+      const slotId2 = uid();
+
       const defaultExamGridSlots = [
-        { id: uid(), time: "8-10" },
-        { id: uid(), time: "10-12" }
+        { id: slotId1, time: "8-10" },
+        { id: slotId2, time: "10-12" }
       ];
 
       const defaultExamGridSchedule = [
-        { time: "8-10", day: "Monday", subject: "PEDIA", location: "Exam Hall 1" },
-        { time: "8-10", day: "Tuesday", subject: "IMPD", location: "Exam Hall 1" },
-        { time: "8-10", day: "Wednesday", subject: "MICRO", location: "Exam Hall 1" },
-        { time: "8-10", day: "Thursday", subject: "FCM2", location: "Exam Hall 1" },
-        { time: "8-10", day: "Friday", subject: "MS2", location: "Exam Hall 1" },
-        { time: "10-12", day: "Monday", subject: "PATHO", location: "Exam Hall 1" },
-        { time: "10-12", day: "Tuesday", subject: "NS2", location: "Exam Hall 1" },
-        { time: "10-12", day: "Friday", subject: "BPHARM", location: "Exam Hall 1" }
+        { slotId: slotId1, day: "Monday", subject: "PEDIA", location: "Exam Hall 1" },
+        { slotId: slotId1, day: "Tuesday", subject: "IMPD", location: "Exam Hall 1" },
+        { slotId: slotId1, day: "Wednesday", subject: "MICRO", location: "Exam Hall 1" },
+        { slotId: slotId1, day: "Thursday", subject: "FCM2", location: "Exam Hall 1" },
+        { slotId: slotId1, day: "Friday", subject: "MS2", location: "Exam Hall 1" },
+        { slotId: slotId2, day: "Monday", subject: "PATHO", location: "Exam Hall 1" },
+        { slotId: slotId2, day: "Tuesday", subject: "NS2", location: "Exam Hall 1" },
+        { slotId: slotId2, day: "Friday", subject: "BPHARM", location: "Exam Hall 1" }
       ];
 
       const defaultJournals = [
@@ -425,6 +464,7 @@
         examBlocks: defaultExamBlocks,
         examGridSlots: defaultExamGridSlots,
         examGridSchedule: defaultExamGridSchedule,
+        calendarTasks: {},
 
         trashBin: [],
         
@@ -433,9 +473,13 @@
         isRestoringHistory: false,
 
         viewYear: 2026,
-        viewMonth: 7,
+        viewMonth: 7, // August
         calendarMonthName: '',
         calendarDays: [],
+
+        showDayModal: false,
+        modalDate: '',
+        newTaskText: '',
 
         async init() {
           this.updateClock();
@@ -459,6 +503,7 @@
               this.examBlocks = (data.examBlocks && data.examBlocks.length > 0) ? data.examBlocks : defaultExamBlocks;
               this.examGridSlots = (data.examGridSlots && data.examGridSlots.length > 0) ? data.examGridSlots : defaultExamGridSlots;
               this.examGridSchedule = (data.examGridSchedule && data.examGridSchedule.length > 0) ? data.examGridSchedule : defaultExamGridSchedule;
+              this.calendarTasks = data.calendarTasks || {};
               
               const now = Date.now();
               const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
@@ -490,6 +535,7 @@
             examBlocks: this.examBlocks,
             examGridSlots: this.examGridSlots,
             examGridSchedule: this.examGridSchedule,
+            calendarTasks: this.calendarTasks,
             trashBin: this.trashBin
           });
           
@@ -528,6 +574,7 @@
           this.examBlocks = state.examBlocks || defaultExamBlocks;
           this.examGridSlots = state.examGridSlots || defaultExamGridSlots;
           this.examGridSchedule = state.examGridSchedule || [];
+          this.calendarTasks = state.calendarTasks || {};
           this.trashBin = state.trashBin || [];
           this.isRestoringHistory = false;
           this.saveToCloud();
@@ -544,6 +591,7 @@
               examBlocks: this.examBlocks,
               examGridSlots: this.examGridSlots,
               examGridSchedule: this.examGridSchedule,
+              calendarTasks: this.calendarTasks,
               trashBin: this.trashBin,
               lastUpdated: new Date()
             });
@@ -641,27 +689,58 @@
         removeExamTimeSlot(sIndex) {
           const slot = this.examGridSlots[sIndex];
           if (slot) {
-            this.examGridSchedule = this.examGridSchedule.filter(item => item.time !== slot.time);
+            this.examGridSchedule = this.examGridSchedule.filter(item => item.slotId !== slot.id);
             this.examGridSlots.splice(sIndex, 1);
             this.recordChange();
           }
         },
 
-        getExamGridCells(time, day) {
-          return this.examGridSchedule.filter(item => item.time === time && item.day === day);
+        getExamGridCellsBySlotId(slotId, day) {
+          return this.examGridSchedule.filter(item => item.slotId === slotId && item.day === day);
         },
 
-        addExamGridCell(time, day) {
-          this.examGridSchedule.push({ time, day, subject: "EXAM TITLE", location: "Exam Hall" });
+        addExamGridCell(slotId, day) {
+          this.examGridSchedule.push({ slotId, day, subject: "EXAM TITLE", location: "Exam Hall" });
           this.recordChange();
         },
 
-        removeExamGridCell(time, day, cIdx) {
-          const matches = this.examGridSchedule.filter(item => item.time === time && item.day === day);
+        removeExamGridCell(slotId, day, cIdx) {
+          const matches = this.examGridSchedule.filter(item => item.slotId === slotId && item.day === day);
           const target = matches[cIdx];
           const globalIdx = this.examGridSchedule.indexOf(target);
           if (globalIdx !== -1) {
             this.examGridSchedule.splice(globalIdx, 1);
+            this.recordChange();
+          }
+        },
+
+        // Calendar & Tasks
+        openDayModal(dateStr) {
+          this.modalDate = dateStr;
+          this.newTaskText = '';
+          this.showDayModal = true;
+        },
+
+        getTasksForDate(dateStr) {
+          return this.calendarTasks[dateStr] || [];
+        },
+
+        addCustomTask() {
+          if (!this.newTaskText.trim()) return;
+          if (!this.calendarTasks[this.modalDate]) {
+            this.calendarTasks[this.modalDate] = [];
+          }
+          this.calendarTasks[this.modalDate].push(this.newTaskText.trim());
+          this.newTaskText = '';
+          this.recordChange();
+        },
+
+        removeTaskForDate(dateStr, tIdx) {
+          if (this.calendarTasks[dateStr]) {
+            this.calendarTasks[dateStr].splice(tIdx, 1);
+            if (this.calendarTasks[dateStr].length === 0) {
+              delete this.calendarTasks[dateStr];
+            }
             this.recordChange();
           }
         },
@@ -685,7 +764,10 @@
             const dateString = `${this.viewYear}-${mStr}-${dStr}`;
             
             let evs = [];
-            // Optional: map fixed exam block date ranges if needed
+            if (this.calendarTasks[dateString]) {
+              evs = evs.concat(this.calendarTasks[dateString]);
+            }
+
             days.push({ dayNum: i, isCurrentMonth: true, dateStr: dateString, events: evs });
           }
 
