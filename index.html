@@ -11,7 +11,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+    import { getFirestore, doc as fsDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBcFt0qsHouaON_U4k1w_mBlDGdslUt3-U",
@@ -686,7 +686,7 @@ function smartPlannerApp() {
 
     async loadFromCloud() {
       try {
-        const docSnap = await window.getDoc(window.doc(window.db, "planners", "med_schedule_data"));
+        const docSnap = await window.getfsDoc(window.fsDoc(window.db, "planners", "med_schedule_data"));
         if (docSnap.exists()) {
           const data = docSnap.data();
           this.events = data.events || defaultEvents;
@@ -712,7 +712,7 @@ function smartPlannerApp() {
     async saveToCloud() {
       try {
         this.syncStatusText = "Syncing...";
-        await window.setDoc(window.doc(window.db, "planners", "med_schedule_data"), {
+        await window.setfsDoc(window.fsDoc(window.db, "planners", "med_schedule_data"), {
           events: this.events,
           fixedClasses: this.fixedClasses,
           fixedExams: this.fixedExams,
