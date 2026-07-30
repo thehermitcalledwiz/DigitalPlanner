@@ -2,7 +2,7 @@
 <html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>YEAR LEVEL 2 MEDICINE</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -10,16 +10,16 @@
   <style>
     [x-cloak]{display:none!important}
     * { scrollbar-width: thin; scrollbar-color: #065f46 #000000; }
-    *::-webkit-scrollbar { width: 6px; height: 6px; }
+    *::-webkit-scrollbar { width: 5px; height: 5px; }
     *::-webkit-scrollbar-thumb { background: #065f46; border-radius: 999px; }
     *::-webkit-scrollbar-track { background: #000000; }
   </style>
 </head>
 
-<body class="bg-black text-emerald-400 min-h-screen p-2 md:p-4 font-mono selection:bg-emerald-900 selection:text-white" x-data="smartPlannerApp()">
-  <div class="max-w-[1400px] mx-auto bg-black rounded-3xl shadow-2xl shadow-emerald-950/50 border border-emerald-900/60 overflow-hidden flex flex-col md:flex-row h-[95vh]">
+<body class="bg-black text-emerald-400 min-h-screen p-1 sm:p-3 md:p-4 font-mono selection:bg-emerald-900 selection:text-white" x-data="smartPlannerApp()">
+  <div class="max-w-[1400px] mx-auto bg-black rounded-2xl sm:rounded-3xl shadow-2xl shadow-emerald-950/50 border border-emerald-900/60 overflow-hidden flex flex-col md:flex-row h-[97vh] sm:h-[95vh]">
 
-    <aside class="w-full md:w-64 bg-black border-r border-emerald-900/60 flex flex-col justify-between p-4 shrink-0">
+    <aside class="hidden md:flex w-64 bg-black border-r border-emerald-900/60 flex-col justify-between p-4 shrink-0">
       <div class="space-y-6">
         <div class="space-y-3 px-2">
           <div class="flex items-center gap-3">
@@ -27,8 +27,8 @@
               <img src="https://media2.giphy.com/media/l0HlRnAWXxn0MhOBK/giphy.gif" alt="Lightning Bolt" class="w-6 h-6 object-contain filter drop-shadow-[0_0_2px_#34d399]" />
             </div>
             <div>
-              <h1 class="font-extrabold text-emerald-300 tracking-wider text-sm leading-tight">YEAR LEVEL 2 MEDICINE</h1>
-              <p class="text-[11px] text-emerald-500 font-medium" x-text="timeGreeting"></p>
+              <h1 class="font-extrabold text-emerald-300 tracking-wider text-xs leading-tight">YL2 MEDICINE</h1>
+              <p class="text-[10px] text-emerald-500 font-medium" x-text="timeGreeting"></p>
             </div>
           </div>
           <div class="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-900/50 text-[11px] text-emerald-400/90 italic text-center">
@@ -53,15 +53,40 @@
 
       <div class="bg-emerald-950/40 border border-emerald-900/60 rounded-2xl p-3 text-xs text-emerald-300 space-y-1">
         <div class="font-bold flex items-center justify-between">
-          <span>Cloud Sync Active</span>
+          <span>Cloud Sync</span>
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         </div>
-        <p class="text-[11px] text-emerald-500" x-text="syncStatusText">Initializing...</p>
+        <p class="text-[10px] text-emerald-500 truncate" x-text="syncStatusText"></p>
       </div>
     </aside>
 
+    <div class="md:hidden flex flex-col bg-black border-b border-emerald-900/60 p-3 shrink-0">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-950 border border-emerald-500/50 flex items-center justify-center overflow-hidden">
+            <img src="https://media2.giphy.com/media/l0HlRnAWXxn0MhOBK/giphy.gif" alt="Bolt" class="w-4 h-4 object-contain" />
+          </div>
+          <span class="font-extrabold text-emerald-300 text-xs">YL2 MED PLANNER</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button @click="undo()" :disabled="historyIndex <= 0" class="px-2 py-1 bg-black border border-emerald-900 text-[10px] rounded text-emerald-300 disabled:opacity-30">↩</button>
+          <button @click="redo()" :disabled="historyIndex >= history.length - 1" class="px-2 py-1 bg-black border border-emerald-900 text-[10px] rounded text-emerald-300 disabled:opacity-30">↪</button>
+        </div>
+      </div>
+      <div class="flex overflow-x-auto gap-1 mt-3 pt-2 border-t border-emerald-950 pb-1 scrollbar-none">
+        <template x-for="item in navItems" :key="item.id">
+          <button @click="currentNav = item.id"
+                  :class="currentNav === item.id ? 'bg-emerald-900 text-emerald-200 border-emerald-500 font-bold' : 'bg-emerald-950/30 text-emerald-500 border-emerald-900/50'"
+                  class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap border transition-all flex items-center gap-1.5 shrink-0">
+            <span x-text="item.icon"></span>
+            <span x-text="item.label"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
     <main class="flex-1 flex flex-col overflow-hidden bg-black">
-      <header class="h-16 border-b border-emerald-900/60 px-6 flex items-center justify-between shrink-0 bg-black">
+      <header class="hidden md:flex h-16 border-b border-emerald-900/60 px-6 items-center justify-between shrink-0 bg-black">
         <div class="flex items-center gap-4">
           <h2 class="text-lg font-extrabold text-emerald-300 tracking-tight" x-text="dateHeaderString"></h2>
           <div class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-900" x-text="currentTimeString"></div>
@@ -81,36 +106,36 @@
         </div>
       </header>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'calendar'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'calendar'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg" x-text="calendarMonthName"></h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Interactive Master Calendar. Click any date cell to add or manage your personal schedule notes.</p>
+            <h3 class="font-bold text-emerald-300 text-base sm:text-lg" x-text="calendarMonthName"></h3>
+            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Interactive Master Calendar. Tap any date cell to add or manage your schedule.</p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex gap-2 w-full sm:w-auto justify-end">
             <button @click="changeMonth(-1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">&larr; Prev</button>
             <button @click="changeMonth(1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">Next &rarr;</button>
           </div>
         </div>
 
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-4">
-          <div class="grid grid-cols-7 gap-2 mb-2 text-center font-bold text-xs text-emerald-500">
+        <div class="bg-black border border-emerald-900/80 rounded-2xl p-2 sm:p-4">
+          <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center font-bold text-[10px] sm:text-xs text-emerald-500">
             <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
           </div>
-          <div class="grid grid-cols-7 gap-2">
+          <div class="grid grid-cols-7 gap-1 sm:gap-2">
             <template x-for="day in calendarDays" :key="day.dateStr || Math.random()">
               <div @click="day.dateStr && openDayModal(day.dateStr)"
-                   :class="day.isCurrentMonth ? 'bg-black border-emerald-900 hover:border-emerald-500 cursor-pointer' : 'bg-emerald-950/10 border-emerald-950/40 opacity-40'"
-                   class="border rounded-xl p-2 h-36 flex flex-col justify-between overflow-hidden transition-all">
+                   :class="day.isCurrentMonth ? 'bg-black border-emerald-900 hover:border-emerald-500 cursor-pointer' : 'bg-emerald-950/10 border-emerald-950/40 opacity-30'"
+                   class="border rounded-xl p-1.5 sm:p-2 h-24 sm:h-36 flex flex-col justify-between overflow-hidden transition-all">
                 <div class="flex items-center justify-between">
-                  <div class="text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
+                  <div class="text-[11px] sm:text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
                   <template x-if="day.dateStr">
-                    <span class="text-[9px] text-emerald-600">+ Add Task</span>
+                    <span class="text-[8px] sm:text-[9px] text-emerald-600">+ Add</span>
                   </template>
                 </div>
-                <div class="space-y-1 overflow-y-auto flex-1 mt-1 pr-1">
+                <div class="space-y-0.5 sm:space-y-1 overflow-y-auto flex-1 mt-1 pr-0.5">
                   <template x-for="(task, tIdx) in getTasksForDate(day.dateStr)" :key="tIdx">
-                    <div class="text-[9px] bg-emerald-950/90 border border-emerald-800/80 text-emerald-300 px-1.5 py-0.5 rounded truncate" x-text="task"></div>
+                    <div class="text-[8px] sm:text-[9px] bg-emerald-950/90 border border-emerald-800/80 text-emerald-300 px-1 py-0.5 rounded truncate" x-text="task"></div>
                   </template>
                 </div>
               </div>
@@ -119,16 +144,16 @@
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'topics'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'topics'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">Subject Topics & High-Yield Checklists</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Organize study modules by subject. Track completion status in real-time.</p>
+            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">Subject Topics & High-Yield Checklists</h3>
+            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Organize study modules by subject. Track completion status in real-time.</p>
           </div>
-          <button @click="addSubjectGroup()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Subject</button>
+          <button @click="addSubjectGroup()" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Subject</button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <template x-for="(sub, sIdx) in subjectTopics" :key="sub.id">
             <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-4 flex flex-col justify-between">
               <div class="space-y-3">
@@ -167,21 +192,21 @@
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'exams'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'exams'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">Exam Week Schedule & Dates</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Fully customizable exam grid. Edit times, exam titles, rooms, and blocks freely.</p>
+            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">Exam Week Schedule & Dates</h3>
+            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Fully customizable exam grid. Edit times, exam titles, and rooms freely.</p>
           </div>
-          <div class="flex gap-2">
-            <button @click="addExamTimeSlot()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Time Row</button>
-            <button @click="resetExamSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Reset Default</button>
+          <div class="flex gap-2 w-full sm:w-auto justify-end">
+            <button @click="addExamTimeSlot()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Row</button>
+            <button @click="resetExamSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Reset</button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
           <template x-for="(block, bIdx) in examBlocks" :key="block.id">
-            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-2 relative">
+            <div class="bg-black border border-emerald-900/80 rounded-2xl p-3 sm:p-4 space-y-2 relative">
               <button @click="removeExamBlock(bIdx)" class="absolute top-2 right-2 text-[10px] text-red-400 hover:text-red-300">×</button>
               <input type="text" x-model="block.title" @input="recordChange()" placeholder="Exam Block..." class="bg-black border border-emerald-900 rounded px-2 py-1 text-xs font-bold text-emerald-200 w-full focus:outline-none focus:border-emerald-500">
               <input type="text" x-model="block.dateRange" @input="recordChange()" placeholder="Date Range..." class="bg-black border border-emerald-900 rounded px-2 py-1 text-xs text-emerald-300 w-full focus:outline-none focus:border-emerald-500">
@@ -189,50 +214,47 @@
             </div>
           </template>
         </div>
-        <div class="flex justify-start">
-          <button @click="addExamBlock()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">+ Add Exam Block</button>
-        </div>
 
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 overflow-x-auto space-y-3">
-          <div class="text-xs font-bold text-emerald-400">Exam Week Daily Grid Matrix (Click any slot or time label to edit)</div>
-          <table class="w-full border-collapse text-xs">
+        <div class="bg-black border border-emerald-900/80 rounded-2xl p-3 sm:p-4 overflow-x-auto space-y-3">
+          <div class="text-xs font-bold text-emerald-400">Exam Week Daily Grid Matrix</div>
+          <table class="w-full border-collapse text-xs min-w-[700px]">
             <thead>
               <tr class="border-b border-emerald-900 text-emerald-500">
-                <th class="p-3 text-left w-32">TIME SLOT</th>
+                <th class="p-3 text-left w-28">TIME</th>
                 <th class="p-3 text-left">MONDAY</th>
                 <th class="p-3 text-left">TUESDAY</th>
                 <th class="p-3 text-left">WEDNESDAY</th>
                 <th class="p-3 text-left">THURSDAY</th>
                 <th class="p-3 text-left">FRIDAY</th>
-                <th class="p-3 text-left w-16">ACTIONS</th>
+                <th class="p-3 text-left w-14">ACTION</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-emerald-950">
               <template x-for="(slotItem, sIndex) in examGridSlots" :key="slotItem.id">
                 <tr>
-                  <td class="p-3 align-top">
+                  <td class="p-2 align-top">
                     <input type="text" x-model="slotItem.time" @input="recordChange()" class="w-full bg-black border border-emerald-900 rounded px-2 py-1 font-bold text-emerald-300 text-xs focus:outline-none focus:border-emerald-500">
                   </td>
                   <template x-for="day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']" :key="day">
-                    <td class="p-2 align-top">
+                    <td class="p-1.5 align-top">
                       <div class="space-y-1">
                         <template x-for="(cell, cIdx) in getExamGridCellsBySlotId(slotItem.id, day)" :key="cIdx">
-                          <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2.5 space-y-1.5 hover:border-emerald-600 transition-all">
+                          <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2 space-y-1">
                             <input type="text" x-model="cell.subject" @input="recordChange()" placeholder="Exam Name..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
-                            <input type="text" x-model="cell.location" @input="recordChange()" placeholder="Room / Hall..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-[10px] text-emerald-400 focus:outline-none focus:border-emerald-500">
+                                   class="w-full bg-black border border-emerald-900/80 rounded px-1.5 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none">
+                            <input type="text" x-model="cell.location" @input="recordChange()" placeholder="Room..." 
+                                   class="w-full bg-black border border-emerald-900/80 rounded px-1.5 py-0.5 text-[10px] text-emerald-400 focus:outline-none">
                             <div class="flex justify-end">
-                              <button @click="removeExamGridCell(slotItem.id, day, cIdx)" class="text-[9px] text-red-400 hover:text-red-300">Remove</button>
+                              <button @click="removeExamGridCell(slotItem.id, day, cIdx)" class="text-[9px] text-red-400">Remove</button>
                             </div>
                           </div>
                         </template>
-                        <button @click="addExamGridCell(slotItem.id, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add Exam</button>
+                        <button @click="addExamGridCell(slotItem.id, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add</button>
                       </div>
                     </td>
                   </template>
-                  <td class="p-3 align-top">
-                    <button @click="removeExamTimeSlot(sIndex)" class="text-red-400 hover:text-red-300 text-xs font-bold">Delete Row</button>
+                  <td class="p-2 align-top">
+                    <button @click="removeExamTimeSlot(sIndex)" class="text-red-400 text-xs font-bold">×</button>
                   </td>
                 </tr>
               </template>
@@ -241,17 +263,17 @@
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'classes'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'classes'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">Year Level 2 Fixed Class Schedule</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Your official standard weekly classes. Click any cell to modify or update topics.</p>
+            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">Year Level 2 Fixed Class Schedule</h3>
+            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Your standard weekly classes. Tap any cell to modify.</p>
           </div>
-          <button @click="resetFixedSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Fixed Template</button>
+          <button @click="resetFixedSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Reset Template</button>
         </div>
 
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 overflow-x-auto">
-          <table class="w-full border-collapse text-xs">
+        <div class="bg-black border border-emerald-900/80 rounded-2xl p-3 sm:p-4 overflow-x-auto">
+          <table class="w-full border-collapse text-xs min-w-[700px]">
             <thead>
               <tr class="border-b border-emerald-900 text-emerald-500">
                 <th class="p-3 text-left w-24">TIME</th>
@@ -267,20 +289,20 @@
                 <tr>
                   <td class="p-3 font-bold text-emerald-400 align-top" x-text="timeSlot"></td>
                   <template x-for="day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']" :key="day">
-                    <td class="p-2 align-top">
+                    <td class="p-1.5 align-top">
                       <div class="space-y-1">
                         <template x-for="(cell, cIdx) in getFixedCells(timeSlot, day)" :key="cIdx">
-                          <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2.5 space-y-1.5 hover:border-emerald-600 transition-all">
+                          <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2 space-y-1">
                             <input type="text" x-model="cell.subject" @input="recordChange()" placeholder="Subject..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
+                                   class="w-full bg-black border border-emerald-900/80 rounded px-1.5 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none">
                             <input type="text" x-model="cell.location" @input="recordChange()" placeholder="Location..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-[10px] text-emerald-400 focus:outline-none focus:border-emerald-500">
+                                   class="w-full bg-black border border-emerald-900/80 rounded px-1.5 py-0.5 text-[10px] text-emerald-400 focus:outline-none">
                             <div class="flex justify-end">
-                              <button @click="removeFixedCell(timeSlot, day, cIdx)" class="text-[9px] text-red-400 hover:text-red-300">Remove</button>
+                              <button @click="removeFixedCell(timeSlot, day, cIdx)" class="text-[9px] text-red-400">Remove</button>
                             </div>
                           </div>
                         </template>
-                        <button @click="addFixedCell(timeSlot, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add Class</button>
+                        <button @click="addFixedCell(timeSlot, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add</button>
                       </div>
                     </td>
                   </template>
@@ -291,59 +313,59 @@
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'journal'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'journal'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">Medical Study Journal & Quick Notes</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Jot down clinical correlations, high-yield reminders, or personal reflections.</p>
+            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">Medical Study Journal & Quick Notes</h3>
+            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Jot down clinical correlations, high-yield reminders, or personal notes.</p>
           </div>
-          <button @click="createNewJournalEntry()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ New Note</button>
+          <button @click="createNewJournalEntry()" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ New Note</button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-2 md:col-span-1 max-h-[60vh] overflow-y-auto pr-2">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <div class="space-y-2 md:col-span-1 max-h-56 md:max-h-[60vh] overflow-y-auto pr-2">
             <template x-for="note in journalNotes" :key="note.id">
               <div @click="activeJournalId = note.id"
                    :class="activeJournalId === note.id ? 'bg-emerald-950 border-emerald-500' : 'bg-black border-emerald-900/60 hover:bg-emerald-950/30'"
-                   class="border rounded-xl p-3.5 cursor-pointer transition-all space-y-1">
+                   class="border rounded-xl p-3 cursor-pointer transition-all space-y-1">
                 <div class="flex items-center justify-between">
                   <span class="font-bold text-xs text-emerald-200 truncate" x-text="note.title || 'Untitled Note'"></span>
-                  <button @click.stop="deleteJournalEntry(note.id)" class="text-red-400 hover:text-red-300 text-[10px] px-1.5 py-0.5 rounded border border-red-950">Delete</button>
+                  <button @click.stop="deleteJournalEntry(note.id)" class="text-red-400 text-[10px] px-1.5 py-0.5 rounded border border-red-950">Delete</button>
                 </div>
                 <p class="text-[11px] text-emerald-500 truncate" x-text="note.content || 'Empty note...'"></p>
                 <div class="text-[9px] text-emerald-600 pt-1" x-text="note.date"></div>
               </div>
             </template>
             <template x-if="journalNotes.length === 0">
-              <div class="text-xs text-emerald-600 italic p-4 text-center">No active journal notes. Click "+ New Note" to add one.</div>
+              <div class="text-xs text-emerald-600 italic p-4 text-center">No active notes. Click "+ New Note".</div>
             </template>
           </div>
 
-          <div class="md:col-span-2 bg-black border border-emerald-900/80 rounded-2xl p-4 flex flex-col h-[60vh]">
+          <div class="md:col-span-2 bg-black border border-emerald-900/80 rounded-2xl p-4 flex flex-col h-[50vh] md:h-[60vh]">
             <template x-if="getActiveJournal()">
-              <div class="flex flex-col h-full space-y-4">
+              <div class="flex flex-col h-full space-y-3">
                 <input type="text" x-model="getActiveJournal().title" @input="recordChange()" placeholder="Note Title..."
-                       class="w-full bg-black border border-emerald-900 rounded-xl px-4 py-2.5 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
+                       class="w-full bg-black border border-emerald-900 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
                 <textarea x-model="getActiveJournal().content" @input="recordChange()" placeholder="Write your notes here..."
-                          class="w-full flex-1 bg-black border border-emerald-900 rounded-xl p-4 text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 resize-none font-mono"></textarea>
+                          class="w-full flex-1 bg-black border border-emerald-900 rounded-xl p-3 text-xs text-emerald-300 focus:outline-none resize-none font-mono"></textarea>
                 <div class="flex items-center justify-between text-[11px] text-emerald-600 pt-2 border-t border-emerald-950">
-                  <span x-text="'Last updated: ' + getActiveJournal().date"></span>
-                  <span class="text-emerald-500 font-semibold" x-text="syncStatusText"></span>
+                  <span x-text="'Updated: ' + getActiveJournal().date"></span>
+                  <span class="text-emerald-500 font-semibold truncate max-w-[180px]" x-text="syncStatusText"></span>
                 </div>
               </div>
             </template>
             <template x-if="!getActiveJournal()">
-              <div class="flex-1 flex items-center justify-center text-xs text-emerald-600 italic">Select a note from the left list or create a new one.</div>
+              <div class="flex-1 flex items-center justify-center text-xs text-emerald-600 italic">Select a note from the list or create a new one.</div>
             </template>
           </div>
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'trash'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+      <div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" x-show="currentNav === 'trash'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">30-Day Trash Bin</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Deleted journal items are kept here for 30 days before permanent removal.</p>
+            <h3 class="font-bold text-emerald-300 text-base sm:text-lg">30-Day Trash Bin</h3>
+            <p class="text-[11px] sm:text-xs text-emerald-500 mt-0.5">Deleted journal items are kept here for 30 days before permanent removal.</p>
           </div>
           <template x-if="trashBin.length > 0">
             <button @click="emptyTrash()" class="px-4 py-2 bg-red-950 hover:bg-red-900 text-red-300 border border-red-900 font-bold rounded-xl text-xs shadow-sm">Empty Trash</button>
@@ -352,13 +374,13 @@
 
         <div class="space-y-3">
           <template x-for="(item, index) in trashBin" :key="item.id">
-            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div class="bg-black border border-emerald-900/80 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div class="space-y-1">
-                <div class="text-sm font-bold text-emerald-200" x-text="item.title || 'Untitled'"></div>
-                <div class="text-[11px] text-emerald-500 truncate max-w-xl" x-text="item.content || 'Empty note...'"></div>
+                <div class="text-xs sm:text-sm font-bold text-emerald-200" x-text="item.title || 'Untitled'"></div>
+                <div class="text-[11px] text-emerald-500 truncate max-w-md" x-text="item.content || 'Empty note...'"></div>
                 <div class="text-[10px] text-red-400" x-text="'Deleted on: ' + new Date(item.deletedAt).toLocaleDateString()"></div>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <button @click="restoreFromTrash(index)" class="px-3 py-1.5 bg-emerald-950 border border-emerald-800 text-emerald-300 hover:bg-emerald-900 text-xs rounded-xl font-bold">Restore</button>
                 <button @click="permanentlyDelete(index)" class="px-3 py-1.5 bg-red-950 border border-red-900 text-red-300 hover:bg-red-900 text-xs rounded-xl font-bold">Delete Forever</button>
               </div>
@@ -374,9 +396,9 @@
   </div>
 
   <div x-show="showDayModal" x-cloak class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-black border border-emerald-900 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl shadow-emerald-950">
+    <div class="bg-black border border-emerald-900 rounded-3xl p-5 sm:p-6 w-full max-w-md space-y-4 shadow-2xl shadow-emerald-950">
       <div class="flex items-center justify-between border-b border-emerald-900 pb-3">
-        <h3 class="text-emerald-300 font-bold text-sm" x-text="'Manage Tasks & Events for ' + modalDate"></h3>
+        <h3 class="text-emerald-300 font-bold text-xs sm:text-sm truncate" x-text="'Tasks for ' + modalDate"></h3>
         <button @click="showDayModal = false" class="text-red-400 text-xs font-bold hover:text-red-300">Close</button>
       </div>
 
@@ -421,8 +443,6 @@
     window.cloudDoc = doc;
     window.cloudSetDoc = setDoc;
     window.cloudGetDoc = getDoc;
-
-    console.log("Firebase Direct Bindings Initialized.");
   </script>
 
   <script>
@@ -540,7 +560,7 @@
         isRestoringHistory: false,
 
         viewYear: 2026,
-        viewMonth: 7, // August
+        viewMonth: 7,
         calendarMonthName: '',
         calendarDays: [],
 
@@ -578,9 +598,9 @@
               let rawTrash = data.trashBin || [];
               this.trashBin = rawTrash.filter(t => (now - t.deletedAt) < thirtyDaysMs);
 
-              this.syncStatusText = "Synced with Firebase ✨";
+              this.syncStatusText = "Synced ✨";
             } else {
-              this.syncStatusText = "Creating Cloud Record ✨";
+              this.syncStatusText = "Creating Record ✨";
               this.saveToCloud();
             }
           } catch (e) {
@@ -666,7 +686,7 @@
               trashBin: this.trashBin,
               lastUpdated: new Date()
             });
-            this.syncStatusText = "Synced with Firebase ✨";
+            this.syncStatusText = "Synced ✨";
           } catch (e) {
             console.error("Cloud save error:", e);
             this.syncStatusText = "Sync Failed ⚠️";
@@ -725,7 +745,6 @@
           this.recordChange();
         },
 
-        // Topics Methods
         addSubjectGroup() {
           this.subjectTopics.push({ id: uid(), name: "NEW SUBJECT", newTopicText: "", topics: [] });
           this.recordChange();
@@ -749,7 +768,6 @@
           this.recordChange();
         },
 
-        // Fixed Schedule Helper Methods
         getFixedCells(time, day) {
           return this.fixedSchedule.filter(item => item.time === time && item.day === day);
         },
@@ -775,7 +793,6 @@
           this.recordChange();
         },
 
-        // Exam Week Helper Methods
         addExamTimeSlot() {
           this.examGridSlots.push({ id: uid(), time: "New Time" });
           this.recordChange();
@@ -826,7 +843,6 @@
           this.recordChange();
         },
 
-        // Calendar & Tasks
         openDayModal(dateStr) {
           this.modalDate = dateStr;
           this.newTaskText = '';
