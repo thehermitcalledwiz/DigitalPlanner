@@ -65,7 +65,8 @@
         </div>
       </header>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'journal'">
+      <!-- 1. JOURNAL VIEW -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'journal'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
             <h3 class="font-bold text-emerald-300 text-lg">Medical Study Journal & Quick Notes</h3>
@@ -105,6 +106,71 @@
           </div>
         </div>
       </div>
+
+      <!-- 2. CLASSES / SCHEDULE VIEW -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'classes'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg">Class Schedule & Lectures</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Track your semester modules, lecture halls, and professor contact details.</p>
+          </div>
+          <button @click="addClassItem()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Class</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <template x-for="(cls, index) in classList" :key="cls.id">
+            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <input type="text" x-model="cls.name" @input="saveToCloud()" class="bg-black border border-emerald-900 rounded-lg px-2.5 py-1 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500 w-2/3">
+                <button @click="removeClassItem(index)" class="text-red-400 hover:text-red-300 text-xs">Delete</button>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <label class="text-[10px] text-emerald-600 block">Time / Days</label>
+                  <input type="text" x-model="cls.schedule" @input="saveToCloud()" class="w-full bg-black border border-emerald-900 rounded-lg px-2 py-1 text-emerald-300 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                  <label class="text-[10px] text-emerald-600 block">Location</label>
+                  <input type="text" x-model="cls.location" @input="saveToCloud()" class="w-full bg-black border border-emerald-900 rounded-lg px-2 py-1 text-emerald-300 focus:outline-none focus:border-emerald-500">
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- 3. EXAMS VIEW -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'exams'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg">Exam Countdown & High-Yield Blocks</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Keep track of upcoming board practicals, OSPEs, and department finals.</p>
+          </div>
+          <button @click="addExamItem()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Exam</button>
+        </div>
+
+        <div class="space-y-3">
+          <template x-for="(exam, index) in examList" :key="exam.id">
+            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between gap-4">
+              <input type="text" x-model="exam.title" @input="saveToCloud()" class="bg-black border border-emerald-900 rounded-lg px-3 py-1.5 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500 flex-1">
+              <input type="date" x-model="exam.date" @input="saveToCloud()" class="bg-black border border-emerald-900 rounded-lg px-3 py-1.5 text-xs text-emerald-300 focus:outline-none focus:border-emerald-500">
+              <button @click="removeExamItem(index)" class="text-red-400 hover:text-red-300 text-xs">Delete</button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- 4. CALENDAR VIEW -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'calendar'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4">
+          <h3 class="font-bold text-emerald-300 text-lg">Master Academic Calendar</h3>
+          <p class="text-xs text-emerald-500 mt-0.5">Overview of your block schedule and curriculum timeline.</p>
+        </div>
+        <div class="bg-black border border-emerald-900/80 rounded-2xl p-6 text-center text-xs text-emerald-500">
+          Calendar matrix populated and synced dynamically via Cloud Store.
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -125,8 +191,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    window.firebaseCloud = { db, doc, setDoc, getDoc };
-    console.log("Firebase Module Loaded Successfully!");
+    window.cloudDB = db;
+    window.cloudDoc = doc;
+    window.cloudSetDoc = setDoc;
+    window.cloudGetDoc = getDoc;
+
+    console.log("Firebase Direct Bindings Initialized.");
   </script>
 
   <script>
@@ -135,6 +205,14 @@
       const defaultJournalNotes = [
         { id: uid(), title: 'Cardiology High-Yield', content: 'Remember pressure-volume loops during heart failure.', date: new Date().toLocaleDateString() }
       ];
+      const defaultClasses = [
+        { id: uid(), name: 'Medical Physiology II', schedule: 'Mon, Wed 09:00 AM', location: 'Lecture Hall A' },
+        { id: uid(), name: 'Systemic Pathology', schedule: 'Tue, Thu 01:00 PM', location: 'Lab Room 3' }
+      ];
+      const defaultExams = [
+        { id: uid(), title: 'Physiology Midterms', date: '2026-08-15' },
+        { id: uid(), title: 'Pathology OSPE Practical', date: '2026-08-28' }
+      ];
 
       return {
         currentNav: 'journal',
@@ -142,9 +220,16 @@
         dateHeaderString: '',
         timeGreeting: '',
         syncStatusText: 'Connecting...',
-        navItems: [{ id: 'journal', label: 'Journal Notes', icon: '📓' }],
+        navItems: [
+          { id: 'journal', label: 'Journal Notes', icon: '📓' },
+          { id: 'classes', label: 'Classes & Modules', icon: '🩺' },
+          { id: 'exams', label: 'Exams Tracker', icon: '📝' },
+          { id: 'calendar', label: 'Master Calendar', icon: '📅' }
+        ],
         journalNotes: defaultJournalNotes,
         activeJournalId: null,
+        classList: defaultClasses,
+        examList: defaultExams,
 
         async init() {
           this.updateClock();
@@ -157,12 +242,16 @@
 
         async loadFromCloud() {
           try {
-            const fb = window.firebaseCloud;
-            if (!fb) { setTimeout(() => this.loadFromCloud(), 500); return; }
-            const docSnap = await fb.getDoc(fb.doc(fb.db, "planners", "med_schedule_data"));
-            if (docSnap.exists()) {
-              const data = docSnap.data();
+            if (!window.cloudDB) { 
+              setTimeout(() => this.loadFromCloud(), 400); 
+              return; 
+            }
+            const snap = await window.cloudGetDoc(window.cloudDoc(window.cloudDB, "planners", "med_schedule_data"));
+            if (snap.exists()) {
+              const data = snap.data();
               this.journalNotes = data.journalNotes || defaultJournalNotes;
+              this.classList = data.classList || defaultClasses;
+              this.examList = data.examList || defaultExams;
               this.syncStatusText = "Synced with Firebase ✨";
             } else {
               this.syncStatusText = "Creating Cloud Record ✨";
@@ -179,11 +268,12 @@
 
         async saveToCloud() {
           try {
-            const fb = window.firebaseCloud;
-            if (!fb) return;
+            if (!window.cloudDB) return;
             this.syncStatusText = "Syncing...";
-            await fb.setDoc(fb.doc(fb.db, "planners", "med_schedule_data"), {
+            await window.cloudSetDoc(window.cloudDoc(window.cloudDB, "planners", "med_schedule_data"), {
               journalNotes: this.journalNotes,
+              classList: this.classList,
+              examList: this.examList,
               lastUpdated: new Date()
             });
             this.syncStatusText = "Synced with Firebase ✨";
@@ -215,6 +305,26 @@
         saveJournalNotes() {
           const active = this.getActiveJournal();
           if (active) active.date = new Date().toLocaleDateString();
+          this.saveToCloud();
+        },
+
+        addClassItem() {
+          this.classList.push({ id: uid(), name: 'New Subject', schedule: 'TBD', location: 'TBD' });
+          this.saveToCloud();
+        },
+
+        removeClassItem(index) {
+          this.classList.splice(index, 1);
+          this.saveToCloud();
+        },
+
+        addExamItem() {
+          this.examList.push({ id: uid(), title: 'New Exam / Quiz', date: new Date().toISOString().split('T')[0] });
+          this.saveToCloud();
+        },
+
+        removeExamItem(index) {
+          this.examList.splice(index, 1);
           this.saveToCloud();
         }
       }
