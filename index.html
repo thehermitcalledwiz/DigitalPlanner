@@ -19,7 +19,6 @@
 <body class="bg-black text-emerald-400 min-h-screen p-2 md:p-4 font-mono selection:bg-emerald-900 selection:text-white" x-data="smartPlannerApp()">
   <div class="max-w-[1400px] mx-auto bg-black rounded-3xl shadow-2xl shadow-emerald-950/50 border border-emerald-900/60 overflow-hidden flex flex-col md:flex-row h-[95vh]">
 
-    <!-- ================= SIDEBAR ================= -->
     <aside class="w-full md:w-64 bg-black border-r border-emerald-900/60 flex flex-col justify-between p-4 shrink-0">
       <div class="space-y-6">
         <div class="space-y-3 px-2">
@@ -61,7 +60,6 @@
       </div>
     </aside>
 
-    <!-- ================= MAIN CONTENT AREA ================= -->
     <main class="flex-1 flex flex-col overflow-hidden bg-black">
       <header class="h-16 border-b border-emerald-900/60 px-6 flex items-center justify-between shrink-0 bg-black">
         <div class="flex items-center gap-4">
@@ -69,7 +67,6 @@
           <div class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-900" x-text="currentTimeString"></div>
         </div>
 
-        <!-- UNDO / REDO CONTROLS -->
         <div class="flex items-center gap-2">
           <button @click="undo()" :disabled="historyIndex <= 0"
                   :class="historyIndex <= 0 ? 'opacity-40 cursor-not-allowed bg-black' : 'hover:bg-emerald-950 bg-black border-emerald-800 text-emerald-200'"
@@ -84,7 +81,6 @@
         </div>
       </header>
 
-      <!-- 1. JOURNAL VIEW -->
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'journal'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
@@ -133,7 +129,6 @@
         </div>
       </div>
 
-      <!-- 2. CLASSES VIEW (Fixed Schedule Matrix) -->
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'classes'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
@@ -184,7 +179,6 @@
         </div>
       </div>
 
-      <!-- 3. EXAMS VIEW (Exam Week Grid & Dates) -->
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'exams'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
@@ -194,7 +188,6 @@
           <button @click="addExamTimeSlot()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Time Row</button>
         </div>
 
-        <!-- Exam Blocks Overview -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <template x-for="block in examBlocks" :key="block.id">
             <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-2">
@@ -205,7 +198,6 @@
           </template>
         </div>
 
-        <!-- Exam Daily Grid Template -->
         <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 overflow-x-auto space-y-3">
           <div class="text-xs font-bold text-emerald-400">Exam Week Daily Grid Template (Click any slot or time label to edit)</div>
           <table class="w-full border-collapse text-xs">
@@ -254,12 +246,11 @@
         </div>
       </div>
 
-      <!-- 4. CALENDAR VIEW -->
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'calendar'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
             <h3 class="font-bold text-emerald-300 text-lg" x-text="calendarMonthName"></h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Master academic timeline and monthly schedule grid. Click any date to add tasks/events.</p>
+            <p class="text-xs text-emerald-500 mt-0.5">Master academic timeline with synced fixed classes, exam blocks, and custom tasks.</p>
           </div>
           <div class="flex gap-2">
             <button @click="changeMonth(-1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">&larr; Prev</button>
@@ -284,9 +275,7 @@
                 </div>
                 <div class="space-y-1 overflow-y-auto flex-1 mt-1">
                   <template x-for="(ev, eIdx) in day.events" :key="eIdx">
-                    <div class="text-[9px] bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 px-1.5 py-0.5 rounded truncate flex items-center justify-between group">
-                      <span x-text="ev"></span>
-                    </div>
+                    <div class="text-[9px] bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 px-1.5 py-0.5 rounded truncate" x-text="ev"></div>
                   </template>
                 </div>
               </div>
@@ -295,7 +284,6 @@
         </div>
       </div>
 
-      <!-- 5. TRASH BIN VIEW -->
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'trash'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
@@ -330,7 +318,6 @@
     </main>
   </div>
 
-  <!-- CALENDAR TASK MODAL -->
   <div x-show="showDayModal" x-cloak class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-black border border-emerald-900 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl shadow-emerald-950">
       <div class="flex items-center justify-between border-b border-emerald-900 pb-3">
@@ -750,6 +737,9 @@
           const totalDays = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
           this.calendarMonthName = new Date(this.viewYear, this.viewMonth).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
           
+          // Map day names to JS day index (0 = Sun, 1 = Mon, etc.)
+          const dayNameToIndex = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
+
           let days = [];
           const prevTotalDays = new Date(this.viewYear, this.viewMonth, 0).getDate();
           
@@ -762,8 +752,27 @@
             const mStr = String(this.viewMonth + 1).padStart(2, '0');
             const dStr = String(i).padStart(2, '0');
             const dateString = `${this.viewYear}-${mStr}-${dStr}`;
+            const currentDateObj = new Date(this.viewYear, this.viewMonth, i);
+            const currentDayOfWeekName = currentDateObj.toLocaleDateString('en-US', { weekday: 'long' });
             
             let evs = [];
+
+            // 1. Automatically inject Fixed Schedule items for weekdays
+            const matchingFixedClasses = this.fixedSchedule.filter(f => f.day.toLowerCase() === currentDayOfWeekName.toLowerCase());
+            matchingFixedClasses.forEach(fc => {
+              evs.push(`📚 ${fc.subject} (${fc.time})`);
+            });
+
+            // 2. Automatically inject Exam Blocks if date falls in their ranges
+            this.examBlocks.forEach(eb => {
+              // Simple check for matching month and year in dateRange text or custom parsing if needed
+              if (eb.dateRange && eb.dateRange.toLowerCase().includes(currentDateObj.toLocaleDateString('en-US', { month: 'short' }).toLowerCase())) {
+                // Check if day number falls within range numbers if present
+                evs.push(`📝 Exam Block: ${eb.title}`);
+              }
+            });
+
+            // 3. User custom tasks
             if (this.calendarTasks[dateString]) {
               evs = evs.concat(this.calendarTasks[dateString]);
             }
