@@ -81,101 +81,89 @@
         </div>
       </header>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'journal'" x-cloak>
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'calendar'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">Medical Study Journal & Quick Notes</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Jot down clinical correlations, high-yield reminders, or personal reflections.</p>
+            <h3 class="font-bold text-emerald-300 text-lg" x-text="calendarMonthName"></h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Interactive Master Calendar. Click any date cell to add or manage your personal schedule notes.</p>
           </div>
-          <button @click="createNewJournalEntry()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ New Note</button>
+          <div class="flex gap-2">
+            <button @click="changeMonth(-1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">&larr; Prev</button>
+            <button @click="changeMonth(1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">Next &rarr;</button>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-2 md:col-span-1 max-h-[60vh] overflow-y-auto pr-2">
-            <template x-for="note in journalNotes" :key="note.id">
-              <div @click="activeJournalId = note.id"
-                   :class="activeJournalId === note.id ? 'bg-emerald-950 border-emerald-500' : 'bg-black border-emerald-900/60 hover:bg-emerald-950/30'"
-                   class="border rounded-xl p-3.5 cursor-pointer transition-all space-y-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-xs text-emerald-200 truncate" x-text="note.title || 'Untitled Note'"></span>
-                  <button @click.stop="deleteJournalEntry(note.id)" class="text-red-400 hover:text-red-300 text-[10px] px-1.5 py-0.5 rounded border border-red-950">Delete</button>
-                </div>
-                <p class="text-[11px] text-emerald-500 truncate" x-text="note.content || 'Empty note...'"></p>
-                <div class="text-[9px] text-emerald-600 pt-1" x-text="note.date"></div>
-              </div>
-            </template>
-            <template x-if="journalNotes.length === 0">
-              <div class="text-xs text-emerald-600 italic p-4 text-center">No active journal notes. Click "+ New Note" to add one.</div>
-            </template>
+        <div class="bg-black border border-emerald-900/80 rounded-2xl p-4">
+          <div class="grid grid-cols-7 gap-2 mb-2 text-center font-bold text-xs text-emerald-500">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
           </div>
-
-          <div class="md:col-span-2 bg-black border border-emerald-900/80 rounded-2xl p-4 flex flex-col h-[60vh]">
-            <template x-if="getActiveJournal()">
-              <div class="flex flex-col h-full space-y-4">
-                <input type="text" x-model="getActiveJournal().title" @input="recordChange()" placeholder="Note Title..."
-                       class="w-full bg-black border border-emerald-900 rounded-xl px-4 py-2.5 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
-                <textarea x-model="getActiveJournal().content" @input="recordChange()" placeholder="Write your notes here..."
-                          class="w-full flex-1 bg-black border border-emerald-900 rounded-xl p-4 text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 resize-none font-mono"></textarea>
-                <div class="flex items-center justify-between text-[11px] text-emerald-600 pt-2 border-t border-emerald-950">
-                  <span x-text="'Last updated: ' + getActiveJournal().date"></span>
-                  <span class="text-emerald-500 font-semibold" x-text="syncStatusText"></span>
+          <div class="grid grid-cols-7 gap-2">
+            <template x-for="day in calendarDays" :key="day.dateStr || Math.random()">
+              <div @click="day.dateStr && openDayModal(day.dateStr)"
+                   :class="day.isCurrentMonth ? 'bg-black border-emerald-900 hover:border-emerald-500 cursor-pointer' : 'bg-emerald-950/10 border-emerald-950/40 opacity-40'"
+                   class="border rounded-xl p-2 h-36 flex flex-col justify-between overflow-hidden transition-all">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
+                  <template x-if="day.dateStr">
+                    <span class="text-[9px] text-emerald-600">+ Add Task</span>
+                  </template>
+                </div>
+                <div class="space-y-1 overflow-y-auto flex-1 mt-1 pr-1">
+                  <template x-for="(task, tIdx) in getTasksForDate(day.dateStr)" :key="tIdx">
+                    <div class="text-[9px] bg-emerald-950/90 border border-emerald-800/80 text-emerald-300 px-1.5 py-0.5 rounded truncate" x-text="task"></div>
+                  </template>
                 </div>
               </div>
-            </template>
-            <template x-if="!getActiveJournal()">
-              <div class="flex-1 flex items-center justify-center text-xs text-emerald-600 italic">Select a note from the left list or create a new one.</div>
             </template>
           </div>
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'classes'" x-cloak>
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'topics'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">Year Level 2 Fixed Class Schedule</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Your official standard weekly classes. Click any cell to modify or update topics.</p>
+            <h3 class="font-bold text-emerald-300 text-lg">Subject Topics & High-Yield Checklists</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Organize study modules by subject. Track completion status in real-time.</p>
           </div>
-          <button @click="resetFixedSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Fixed Template</button>
+          <button @click="addSubjectGroup()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Subject</button>
         </div>
 
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 overflow-x-auto">
-          <table class="w-full border-collapse text-xs">
-            <thead>
-              <tr class="border-b border-emerald-900 text-emerald-500">
-                <th class="p-3 text-left w-24">TIME</th>
-                <th class="p-3 text-left">MONDAY</th>
-                <th class="p-3 text-left">TUESDAY</th>
-                <th class="p-3 text-left">WEDNESDAY</th>
-                <th class="p-3 text-left">THURSDAY</th>
-                <th class="p-3 text-left">FRIDAY</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-emerald-950">
-              <template x-for="timeSlot in fixedTimes" :key="timeSlot">
-                <tr>
-                  <td class="p-3 font-bold text-emerald-400 align-top" x-text="timeSlot"></td>
-                  <template x-for="day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']" :key="day">
-                    <td class="p-2 align-top">
-                      <div class="space-y-1">
-                        <template x-for="(cell, cIdx) in getFixedCells(timeSlot, day)" :key="cIdx">
-                          <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2.5 space-y-1.5 hover:border-emerald-600 transition-all">
-                            <input type="text" x-model="cell.subject" @input="recordChange()" placeholder="Subject..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
-                            <input type="text" x-model="cell.location" @input="recordChange()" placeholder="Location..." 
-                                   class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-[10px] text-emerald-400 focus:outline-none focus:border-emerald-500">
-                            <div class="flex justify-end">
-                              <button @click="removeFixedCell(timeSlot, day, cIdx)" class="text-[9px] text-red-400 hover:text-red-300">Remove</button>
-                            </div>
-                          </div>
-                        </template>
-                        <button @click="addFixedCell(timeSlot, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add Class</button>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <template x-for="(sub, sIdx) in subjectTopics" :key="sub.id">
+            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-4 flex flex-col justify-between">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                  <input type="text" x-model="sub.name" @input="recordChange()" placeholder="Subject Name..."
+                         class="bg-black border border-emerald-900 rounded-lg px-2.5 py-1 text-xs font-extrabold text-emerald-200 w-full focus:outline-none focus:border-emerald-500">
+                  <button @click="removeSubjectGroup(sIdx)" class="text-red-400 hover:text-red-300 text-xs px-2 py-1 border border-red-950 rounded-lg">×</button>
+                </div>
+
+                <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  <template x-for="(topic, tIdx) in sub.topics" :key="topic.id">
+                    <div class="flex items-center justify-between gap-2 bg-emerald-950/20 border border-emerald-900/50 p-2 rounded-xl">
+                      <div class="flex items-center gap-2.5 flex-1">
+                        <input type="checkbox" x-model="topic.done" @change="recordChange()"
+                               class="w-4 h-4 accent-emerald-500 bg-black border-emerald-800 rounded cursor-pointer">
+                        <input type="text" x-model="topic.title" @input="recordChange()" placeholder="Topic name..."
+                               :class="topic.done ? 'line-through text-emerald-600' : 'text-emerald-300'"
+                               class="bg-transparent text-xs w-full focus:outline-none">
                       </div>
-                    </td>
+                      <button @click="removeTopicItem(sIdx, tIdx)" class="text-red-400/70 hover:text-red-300 text-[10px]">✕</button>
+                    </div>
                   </template>
-                </tr>
-              </template>
-            </tbody>
-          </table>
+                  <template x-if="sub.topics.length === 0">
+                    <div class="text-[11px] text-emerald-600 italic text-center py-2">No topics added yet.</div>
+                  </template>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-emerald-950 flex gap-2">
+                <input type="text" x-model="sub.newTopicText" @keyup.enter="addTopicItem(sIdx)" placeholder="New topic..."
+                       class="flex-1 bg-black border border-emerald-900 rounded-xl px-3 py-1.5 text-xs text-emerald-200 focus:outline-none focus:border-emerald-500">
+                <button @click="addTopicItem(sIdx)" class="px-3 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded-xl text-xs font-bold">+</button>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -253,73 +241,99 @@
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'youtube'" x-cloak>
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'classes'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">High-Yield YouTube & Lecture Links</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Pin important video lectures, playlists, and study resources for easy access.</p>
+            <h3 class="font-bold text-emerald-300 text-lg">Year Level 2 Fixed Class Schedule</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Your official standard weekly classes. Click any cell to modify or update topics.</p>
           </div>
-          <button @click="addYouTubeLink()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Video Link</button>
+          <button @click="resetFixedSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Fixed Template</button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <template x-for="(vid, vIdx) in youtubeLinks" :key="vid.id">
-            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-3">
-              <div class="flex items-center justify-between gap-2">
-                <input type="text" x-model="vid.title" @input="recordChange()" placeholder="Video / Topic Title..." 
-                       class="w-full bg-black border border-emerald-900 rounded px-2 py-1 text-xs font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
-                <button @click="removeYouTubeLink(vIdx)" class="text-red-400 hover:text-red-300 text-xs px-2 py-1 border border-red-950 rounded">Delete</button>
-              </div>
-              <input type="text" x-model="vid.url" @input="recordChange()" placeholder="Paste YouTube Link (https://...)..." 
-                     class="w-full bg-black border border-emerald-900 rounded px-2 py-1 text-xs text-emerald-400 focus:outline-none focus:border-emerald-500">
-              <div class="flex items-center justify-between pt-1">
-                <input type="text" x-model="vid.subject" @input="recordChange()" placeholder="Subject Tag..." 
-                       class="w-32 bg-black border border-emerald-900 rounded px-2 py-0.5 text-[10px] text-emerald-500 focus:outline-none focus:border-emerald-500">
-                <template x-if="vid.url">
-                  <a :href="vid.url" target="_blank" class="px-3 py-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded-lg text-[10px] font-bold">Open Watch &rarr;</a>
-                </template>
-              </div>
-            </div>
-          </template>
-          <template x-if="youtubeLinks.length === 0">
-            <div class="col-span-2 text-center py-16 text-xs text-emerald-600 italic">No video links added yet. Click "+ Add Video Link" above.</div>
-          </template>
+        <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 overflow-x-auto">
+          <table class="w-full border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-emerald-900 text-emerald-500">
+                <th class="p-3 text-left w-24">TIME</th>
+                <th class="p-3 text-left">MONDAY</th>
+                <th class="p-3 text-left">TUESDAY</th>
+                <th class="p-3 text-left">WEDNESDAY</th>
+                <th class="p-3 text-left">THURSDAY</th>
+                <th class="p-3 text-left">FRIDAY</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-emerald-950">
+              <template x-for="timeSlot in fixedTimes" :key="timeSlot">
+                <tr>
+                  <td class="p-3 font-bold text-emerald-400 align-top" x-text="timeSlot"></td>
+                  <template x-for="day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']" :key="day">
+                    <td class="p-2 align-top">
+                      <div class="space-y-1">
+                        <template x-for="(cell, cIdx) in getFixedCells(timeSlot, day)" :key="cIdx">
+                          <div class="bg-emerald-950/30 border border-emerald-900/60 rounded-xl p-2.5 space-y-1.5 hover:border-emerald-600 transition-all">
+                            <input type="text" x-model="cell.subject" @input="recordChange()" placeholder="Subject..." 
+                                   class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-xs font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
+                            <input type="text" x-model="cell.location" @input="recordChange()" placeholder="Location..." 
+                                   class="w-full bg-black border border-emerald-900/80 rounded px-2 py-0.5 text-[10px] text-emerald-400 focus:outline-none focus:border-emerald-500">
+                            <div class="flex justify-end">
+                              <button @click="removeFixedCell(timeSlot, day, cIdx)" class="text-[9px] text-red-400 hover:text-red-300">Remove</button>
+                            </div>
+                          </div>
+                        </template>
+                        <button @click="addFixedCell(timeSlot, day)" class="w-full py-1 bg-black border border-emerald-900/50 hover:bg-emerald-950 text-[10px] text-emerald-500 rounded-lg">+ Add Class</button>
+                      </div>
+                    </td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'calendar'" x-cloak>
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'journal'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg" x-text="calendarMonthName"></h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Interactive Master Calendar. Click any date cell to add or manage your personal schedule notes.</p>
+            <h3 class="font-bold text-emerald-300 text-lg">Medical Study Journal & Quick Notes</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Jot down clinical correlations, high-yield reminders, or personal reflections.</p>
           </div>
-          <div class="flex gap-2">
-            <button @click="changeMonth(-1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">&larr; Prev</button>
-            <button @click="changeMonth(1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">Next &rarr;</button>
-          </div>
+          <button @click="createNewJournalEntry()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ New Note</button>
         </div>
 
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-4">
-          <div class="grid grid-cols-7 gap-2 mb-2 text-center font-bold text-xs text-emerald-500">
-            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-          </div>
-          <div class="grid grid-cols-7 gap-2">
-            <template x-for="day in calendarDays" :key="day.dateStr || Math.random()">
-              <div @click="day.dateStr && openDayModal(day.dateStr)"
-                   :class="day.isCurrentMonth ? 'bg-black border-emerald-900 hover:border-emerald-500 cursor-pointer' : 'bg-emerald-950/10 border-emerald-950/40 opacity-40'"
-                   class="border rounded-xl p-2 h-36 flex flex-col justify-between overflow-hidden transition-all">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-2 md:col-span-1 max-h-[60vh] overflow-y-auto pr-2">
+            <template x-for="note in journalNotes" :key="note.id">
+              <div @click="activeJournalId = note.id"
+                   :class="activeJournalId === note.id ? 'bg-emerald-950 border-emerald-500' : 'bg-black border-emerald-900/60 hover:bg-emerald-950/30'"
+                   class="border rounded-xl p-3.5 cursor-pointer transition-all space-y-1">
                 <div class="flex items-center justify-between">
-                  <div class="text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
-                  <template x-if="day.dateStr">
-                    <span class="text-[9px] text-emerald-600">+ Add Task</span>
-                  </template>
+                  <span class="font-bold text-xs text-emerald-200 truncate" x-text="note.title || 'Untitled Note'"></span>
+                  <button @click.stop="deleteJournalEntry(note.id)" class="text-red-400 hover:text-red-300 text-[10px] px-1.5 py-0.5 rounded border border-red-950">Delete</button>
                 </div>
-                <div class="space-y-1 overflow-y-auto flex-1 mt-1 pr-1">
-                  <template x-for="(task, tIdx) in getTasksForDate(day.dateStr)" :key="tIdx">
-                    <div class="text-[9px] bg-emerald-950/90 border border-emerald-800/80 text-emerald-300 px-1.5 py-0.5 rounded truncate" x-text="task"></div>
-                  </template>
+                <p class="text-[11px] text-emerald-500 truncate" x-text="note.content || 'Empty note...'"></p>
+                <div class="text-[9px] text-emerald-600 pt-1" x-text="note.date"></div>
+              </div>
+            </template>
+            <template x-if="journalNotes.length === 0">
+              <div class="text-xs text-emerald-600 italic p-4 text-center">No active journal notes. Click "+ New Note" to add one.</div>
+            </template>
+          </div>
+
+          <div class="md:col-span-2 bg-black border border-emerald-900/80 rounded-2xl p-4 flex flex-col h-[60vh]">
+            <template x-if="getActiveJournal()">
+              <div class="flex flex-col h-full space-y-4">
+                <input type="text" x-model="getActiveJournal().title" @input="recordChange()" placeholder="Note Title..."
+                       class="w-full bg-black border border-emerald-900 rounded-xl px-4 py-2.5 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
+                <textarea x-model="getActiveJournal().content" @input="recordChange()" placeholder="Write your notes here..."
+                          class="w-full flex-1 bg-black border border-emerald-900 rounded-xl p-4 text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 resize-none font-mono"></textarea>
+                <div class="flex items-center justify-between text-[11px] text-emerald-600 pt-2 border-t border-emerald-950">
+                  <span x-text="'Last updated: ' + getActiveJournal().date"></span>
+                  <span class="text-emerald-500 font-semibold" x-text="syncStatusText"></span>
                 </div>
               </div>
+            </template>
+            <template x-if="!getActiveJournal()">
+              <div class="flex-1 flex items-center justify-center text-xs text-emerald-600 italic">Select a note from the left list or create a new one.</div>
             </template>
           </div>
         </div>
@@ -466,26 +480,44 @@
         { slotId: slotId2, day: "Friday", subject: "BPHARM", location: "Exam Hall 1" }
       ];
 
+      const defaultSubjectTopics = [
+        {
+          id: uid(),
+          name: "PATHO",
+          newTopicText: "",
+          topics: [
+            { id: uid(), title: "Cell Injury & Adaptation", done: true },
+            { id: uid(), title: "Inflammation & Repair", done: false },
+            { id: uid(), title: "Hemodynamics & Thrombosis", done: false }
+          ]
+        },
+        {
+          id: uid(),
+          name: "MICRO",
+          newTopicText: "",
+          topics: [
+            { id: uid(), title: "Bacteriology General Principles", done: true },
+            { id: uid(), title: "Gram Positive Cocci", done: false }
+          ]
+        }
+      ];
+
       const defaultJournals = [
         { id: uid(), title: 'YL2 Orientation & Modules', content: 'Keep track of high-yield cases and laboratory requirements.', date: new Date().toLocaleDateString() }
       ];
 
-      const defaultYouTubeLinks = [
-        { id: uid(), title: 'Pathoma General Pathology', url: 'https://www.youtube.com', subject: 'PATHO' }
-      ];
-
       return {
-        currentNav: 'journal',
+        currentNav: 'calendar',
         currentTimeString: '',
         dateHeaderString: '',
         timeGreeting: '',
         syncStatusText: 'Connecting...',
         navItems: [
-          { id: 'journal', label: 'Journal Notes', icon: '📓' },
-          { id: 'classes', label: 'Fixed Schedule', icon: '🩺' },
-          { id: 'exams', label: 'Exam Week', icon: '📝' },
-          { id: 'youtube', label: 'Video Lectures', icon: '📺' },
           { id: 'calendar', label: 'Master Calendar', icon: '📅' },
+          { id: 'topics', label: 'Topics', icon: '📚' },
+          { id: 'exams', label: 'Exam Week', icon: '📝' },
+          { id: 'classes', label: 'Fixed Schedule', icon: '🩺' },
+          { id: 'journal', label: 'Journal', icon: '📓' },
           { id: 'trash', label: 'Trash Bin', icon: '🗑️' }
         ],
         journalNotes: defaultJournals,
@@ -497,7 +529,8 @@
         examBlocks: defaultExamBlocks,
         examGridSlots: defaultExamGridSlots,
         examGridSchedule: defaultExamGridSchedule,
-        youtubeLinks: defaultYouTubeLinks,
+        
+        subjectTopics: defaultSubjectTopics,
         calendarTasks: {},
 
         trashBin: [],
@@ -537,7 +570,7 @@
               this.examBlocks = (data.examBlocks && data.examBlocks.length > 0) ? data.examBlocks : defaultExamBlocks;
               this.examGridSlots = (data.examGridSlots && data.examGridSlots.length > 0) ? data.examGridSlots : defaultExamGridSlots;
               this.examGridSchedule = (data.examGridSchedule && data.examGridSchedule.length > 0) ? data.examGridSchedule : defaultExamGridSchedule;
-              this.youtubeLinks = (data.youtubeLinks && data.youtubeLinks.length > 0) ? data.youtubeLinks : defaultYouTubeLinks;
+              this.subjectTopics = (data.subjectTopics && data.subjectTopics.length > 0) ? data.subjectTopics : defaultSubjectTopics;
               this.calendarTasks = data.calendarTasks || {};
               
               const now = Date.now();
@@ -570,7 +603,7 @@
             examBlocks: this.examBlocks,
             examGridSlots: this.examGridSlots,
             examGridSchedule: this.examGridSchedule,
-            youtubeLinks: this.youtubeLinks,
+            subjectTopics: this.subjectTopics,
             calendarTasks: this.calendarTasks,
             trashBin: this.trashBin
           });
@@ -610,7 +643,7 @@
           this.examBlocks = state.examBlocks || defaultExamBlocks;
           this.examGridSlots = state.examGridSlots || defaultExamGridSlots;
           this.examGridSchedule = state.examGridSchedule || [];
-          this.youtubeLinks = state.youtubeLinks || [];
+          this.subjectTopics = state.subjectTopics || defaultSubjectTopics;
           this.calendarTasks = state.calendarTasks || {};
           this.trashBin = state.trashBin || [];
           this.isRestoringHistory = false;
@@ -628,7 +661,7 @@
               examBlocks: this.examBlocks,
               examGridSlots: this.examGridSlots,
               examGridSchedule: this.examGridSchedule,
-              youtubeLinks: this.youtubeLinks,
+              subjectTopics: this.subjectTopics,
               calendarTasks: this.calendarTasks,
               trashBin: this.trashBin,
               lastUpdated: new Date()
@@ -689,6 +722,30 @@
 
         emptyTrash() {
           this.trashBin = [];
+          this.recordChange();
+        },
+
+        // Topics Methods
+        addSubjectGroup() {
+          this.subjectTopics.push({ id: uid(), name: "NEW SUBJECT", newTopicText: "", topics: [] });
+          this.recordChange();
+        },
+
+        removeSubjectGroup(sIdx) {
+          this.subjectTopics.splice(sIdx, 1);
+          this.recordChange();
+        },
+
+        addTopicItem(sIdx) {
+          const sub = this.subjectTopics[sIdx];
+          if (!sub.newTopicText || !sub.newTopicText.trim()) return;
+          sub.topics.push({ id: uid(), title: sub.newTopicText.trim(), done: false });
+          sub.newTopicText = "";
+          this.recordChange();
+        },
+
+        removeTopicItem(sIdx, tIdx) {
+          this.subjectTopics[sIdx].topics.splice(tIdx, 1);
           this.recordChange();
         },
 
@@ -766,17 +823,6 @@
           this.examBlocks = defaultExamBlocks;
           this.examGridSlots = defaultExamGridSlots;
           this.examGridSchedule = defaultExamGridSchedule;
-          this.recordChange();
-        },
-
-        // YouTube Links Methods
-        addYouTubeLink() {
-          this.youtubeLinks.unshift({ id: uid(), title: 'New Lecture Video', url: '', subject: 'GENERAL' });
-          this.recordChange();
-        },
-
-        removeYouTubeLink(vIdx) {
-          this.youtubeLinks.splice(vIdx, 1);
           this.recordChange();
         },
 
