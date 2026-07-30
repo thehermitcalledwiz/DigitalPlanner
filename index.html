@@ -183,23 +183,30 @@
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
             <h3 class="font-bold text-emerald-300 text-lg">Exam Week Schedule & Dates</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Customizable examination time slots and block dates for the term.</p>
+            <p class="text-xs text-emerald-500 mt-0.5">Fully customizable exam grid. Edit times, exam titles, rooms, and blocks freely.</p>
           </div>
-          <button @click="addExamTimeSlot()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Time Row</button>
+          <div class="flex gap-2">
+            <button @click="addExamTimeSlot()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Time Row</button>
+            <button @click="resetExamSchedule()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">Reset Default</button>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <template x-for="block in examBlocks" :key="block.id">
-            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-2">
-              <input type="text" x-model="block.title" @input="recordChange()" class="bg-black border border-emerald-900 rounded px-2 py-1 text-xs font-bold text-emerald-200 w-full focus:outline-none focus:border-emerald-500">
-              <input type="text" x-model="block.dateRange" @input="recordChange()" class="bg-black border border-emerald-900 rounded px-2 py-1 text-xs text-emerald-300 w-full focus:outline-none focus:border-emerald-500">
-              <input type="text" x-model="block.desc" @input="recordChange()" class="bg-black border border-emerald-900 rounded px-2 py-1 text-[11px] text-emerald-500 w-full focus:outline-none focus:border-emerald-500">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+          <template x-for="(block, bIdx) in examBlocks" :key="block.id">
+            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-2 relative">
+              <button @click="removeExamBlock(bIdx)" class="absolute top-2 right-2 text-[10px] text-red-400 hover:text-red-300">×</button>
+              <input type="text" x-model="block.title" @input="recordChange()" placeholder="Exam Block..." class="bg-black border border-emerald-900 rounded px-2 py-1 text-xs font-bold text-emerald-200 w-full focus:outline-none focus:border-emerald-500">
+              <input type="text" x-model="block.dateRange" @input="recordChange()" placeholder="Date Range..." class="bg-black border border-emerald-900 rounded px-2 py-1 text-xs text-emerald-300 w-full focus:outline-none focus:border-emerald-500">
+              <input type="text" x-model="block.desc" @input="recordChange()" placeholder="Description..." class="bg-black border border-emerald-900 rounded px-2 py-1 text-[11px] text-emerald-500 w-full focus:outline-none focus:border-emerald-500">
             </div>
           </template>
         </div>
+        <div class="flex justify-start">
+          <button @click="addExamBlock()" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 font-bold rounded-xl text-xs shadow-sm">+ Add Exam Block</button>
+        </div>
 
         <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 overflow-x-auto space-y-3">
-          <div class="text-xs font-bold text-emerald-400">Exam Week Daily Grid Template (Click any slot or time label to edit)</div>
+          <div class="text-xs font-bold text-emerald-400">Exam Week Daily Grid Matrix (Click any slot or time label to edit)</div>
           <table class="w-full border-collapse text-xs">
             <thead>
               <tr class="border-b border-emerald-900 text-emerald-500">
@@ -246,11 +253,45 @@
         </div>
       </div>
 
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'youtube'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg">High-Yield YouTube & Lecture Links</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Pin important video lectures, playlists, and study resources for easy access.</p>
+          </div>
+          <button @click="addYouTubeLink()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Video Link</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <template x-for="(vid, vIdx) in youtubeLinks" :key="vid.id">
+            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <input type="text" x-model="vid.title" @input="recordChange()" placeholder="Video / Topic Title..." 
+                       class="w-full bg-black border border-emerald-900 rounded px-2 py-1 text-xs font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
+                <button @click="removeYouTubeLink(vIdx)" class="text-red-400 hover:text-red-300 text-xs px-2 py-1 border border-red-950 rounded">Delete</button>
+              </div>
+              <input type="text" x-model="vid.url" @input="recordChange()" placeholder="Paste YouTube Link (https://...)..." 
+                     class="w-full bg-black border border-emerald-900 rounded px-2 py-1 text-xs text-emerald-400 focus:outline-none focus:border-emerald-500">
+              <div class="flex items-center justify-between pt-1">
+                <input type="text" x-model="vid.subject" @input="recordChange()" placeholder="Subject Tag..." 
+                       class="w-32 bg-black border border-emerald-900 rounded px-2 py-0.5 text-[10px] text-emerald-500 focus:outline-none focus:border-emerald-500">
+                <template x-if="vid.url">
+                  <a :href="vid.url" target="_blank" class="px-3 py-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded-lg text-[10px] font-bold">Open Watch &rarr;</a>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="youtubeLinks.length === 0">
+            <div class="col-span-2 text-center py-16 text-xs text-emerald-600 italic">No video links added yet. Click "+ Add Video Link" above.</div>
+          </template>
+        </div>
+      </div>
+
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'calendar'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
             <h3 class="font-bold text-emerald-300 text-lg" x-text="calendarMonthName"></h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Master academic timeline with synced fixed classes, exam blocks, and custom tasks.</p>
+            <p class="text-xs text-emerald-500 mt-0.5">Interactive Master Calendar. Click any date cell to add or manage your personal schedule notes.</p>
           </div>
           <div class="flex gap-2">
             <button @click="changeMonth(-1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">&larr; Prev</button>
@@ -266,16 +307,16 @@
             <template x-for="day in calendarDays" :key="day.dateStr || Math.random()">
               <div @click="day.dateStr && openDayModal(day.dateStr)"
                    :class="day.isCurrentMonth ? 'bg-black border-emerald-900 hover:border-emerald-500 cursor-pointer' : 'bg-emerald-950/10 border-emerald-950/40 opacity-40'"
-                   class="border rounded-xl p-2 h-28 flex flex-col justify-between overflow-hidden transition-all">
+                   class="border rounded-xl p-2 h-36 flex flex-col justify-between overflow-hidden transition-all">
                 <div class="flex items-center justify-between">
                   <div class="text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
                   <template x-if="day.dateStr">
-                    <span class="text-[9px] text-emerald-600">+ Add</span>
+                    <span class="text-[9px] text-emerald-600">+ Add Task</span>
                   </template>
                 </div>
-                <div class="space-y-1 overflow-y-auto flex-1 mt-1">
-                  <template x-for="(ev, eIdx) in day.events" :key="eIdx">
-                    <div class="text-[9px] bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 px-1.5 py-0.5 rounded truncate" x-text="ev"></div>
+                <div class="space-y-1 overflow-y-auto flex-1 mt-1 pr-1">
+                  <template x-for="(task, tIdx) in getTasksForDate(day.dateStr)" :key="tIdx">
+                    <div class="text-[9px] bg-emerald-950/90 border border-emerald-800/80 text-emerald-300 px-1.5 py-0.5 rounded truncate" x-text="task"></div>
                   </template>
                 </div>
               </div>
@@ -429,6 +470,10 @@
         { id: uid(), title: 'YL2 Orientation & Modules', content: 'Keep track of high-yield cases and laboratory requirements.', date: new Date().toLocaleDateString() }
       ];
 
+      const defaultYouTubeLinks = [
+        { id: uid(), title: 'Pathoma General Pathology', url: 'https://www.youtube.com', subject: 'PATHO' }
+      ];
+
       return {
         currentNav: 'journal',
         currentTimeString: '',
@@ -439,6 +484,7 @@
           { id: 'journal', label: 'Journal Notes', icon: '📓' },
           { id: 'classes', label: 'Fixed Schedule', icon: '🩺' },
           { id: 'exams', label: 'Exam Week', icon: '📝' },
+          { id: 'youtube', label: 'Video Lectures', icon: '📺' },
           { id: 'calendar', label: 'Master Calendar', icon: '📅' },
           { id: 'trash', label: 'Trash Bin', icon: '🗑️' }
         ],
@@ -451,6 +497,7 @@
         examBlocks: defaultExamBlocks,
         examGridSlots: defaultExamGridSlots,
         examGridSchedule: defaultExamGridSchedule,
+        youtubeLinks: defaultYouTubeLinks,
         calendarTasks: {},
 
         trashBin: [],
@@ -490,6 +537,7 @@
               this.examBlocks = (data.examBlocks && data.examBlocks.length > 0) ? data.examBlocks : defaultExamBlocks;
               this.examGridSlots = (data.examGridSlots && data.examGridSlots.length > 0) ? data.examGridSlots : defaultExamGridSlots;
               this.examGridSchedule = (data.examGridSchedule && data.examGridSchedule.length > 0) ? data.examGridSchedule : defaultExamGridSchedule;
+              this.youtubeLinks = (data.youtubeLinks && data.youtubeLinks.length > 0) ? data.youtubeLinks : defaultYouTubeLinks;
               this.calendarTasks = data.calendarTasks || {};
               
               const now = Date.now();
@@ -522,6 +570,7 @@
             examBlocks: this.examBlocks,
             examGridSlots: this.examGridSlots,
             examGridSchedule: this.examGridSchedule,
+            youtubeLinks: this.youtubeLinks,
             calendarTasks: this.calendarTasks,
             trashBin: this.trashBin
           });
@@ -561,6 +610,7 @@
           this.examBlocks = state.examBlocks || defaultExamBlocks;
           this.examGridSlots = state.examGridSlots || defaultExamGridSlots;
           this.examGridSchedule = state.examGridSchedule || [];
+          this.youtubeLinks = state.youtubeLinks || [];
           this.calendarTasks = state.calendarTasks || {};
           this.trashBin = state.trashBin || [];
           this.isRestoringHistory = false;
@@ -578,6 +628,7 @@
               examBlocks: this.examBlocks,
               examGridSlots: this.examGridSlots,
               examGridSchedule: this.examGridSchedule,
+              youtubeLinks: this.youtubeLinks,
               calendarTasks: this.calendarTasks,
               trashBin: this.trashBin,
               lastUpdated: new Date()
@@ -701,6 +752,34 @@
           }
         },
 
+        addExamBlock() {
+          this.examBlocks.push({ id: uid(), title: "EXAM BLOCK", dateRange: "Date Range", desc: "Description" });
+          this.recordChange();
+        },
+
+        removeExamBlock(bIdx) {
+          this.examBlocks.splice(bIdx, 1);
+          this.recordChange();
+        },
+
+        resetExamSchedule() {
+          this.examBlocks = defaultExamBlocks;
+          this.examGridSlots = defaultExamGridSlots;
+          this.examGridSchedule = defaultExamGridSchedule;
+          this.recordChange();
+        },
+
+        // YouTube Links Methods
+        addYouTubeLink() {
+          this.youtubeLinks.unshift({ id: uid(), title: 'New Lecture Video', url: '', subject: 'GENERAL' });
+          this.recordChange();
+        },
+
+        removeYouTubeLink(vIdx) {
+          this.youtubeLinks.splice(vIdx, 1);
+          this.recordChange();
+        },
+
         // Calendar & Tasks
         openDayModal(dateStr) {
           this.modalDate = dateStr;
@@ -737,9 +816,6 @@
           const totalDays = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
           this.calendarMonthName = new Date(this.viewYear, this.viewMonth).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
           
-          // Map day names to JS day index (0 = Sun, 1 = Mon, etc.)
-          const dayNameToIndex = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
-
           let days = [];
           const prevTotalDays = new Date(this.viewYear, this.viewMonth, 0).getDate();
           
@@ -752,30 +828,8 @@
             const mStr = String(this.viewMonth + 1).padStart(2, '0');
             const dStr = String(i).padStart(2, '0');
             const dateString = `${this.viewYear}-${mStr}-${dStr}`;
-            const currentDateObj = new Date(this.viewYear, this.viewMonth, i);
-            const currentDayOfWeekName = currentDateObj.toLocaleDateString('en-US', { weekday: 'long' });
             
-            let evs = [];
-
-            // 1. Automatically inject Fixed Schedule items for weekdays
-            const matchingFixedClasses = this.fixedSchedule.filter(f => f.day.toLowerCase() === currentDayOfWeekName.toLowerCase());
-            matchingFixedClasses.forEach(fc => {
-              evs.push(`📚 ${fc.subject} (${fc.time})`);
-            });
-
-            // 2. Automatically inject Exam Blocks if date falls in their ranges
-            this.examBlocks.forEach(eb => {
-              // Simple check for matching month and year in dateRange text or custom parsing if needed
-              if (eb.dateRange && eb.dateRange.toLowerCase().includes(currentDateObj.toLocaleDateString('en-US', { month: 'short' }).toLowerCase())) {
-                // Check if day number falls within range numbers if present
-                evs.push(`📝 Exam Block: ${eb.title}`);
-              }
-            });
-
-            // 3. User custom tasks
-            if (this.calendarTasks[dateString]) {
-              evs = evs.concat(this.calendarTasks[dateString]);
-            }
+            let evs = this.calendarTasks[dateString] || [];
 
             days.push({ dayNum: i, isCurrentMonth: true, dateStr: dateString, events: evs });
           }
