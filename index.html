@@ -24,7 +24,9 @@
       <div class="space-y-6">
         <div class="space-y-3 px-2">
           <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-emerald-950 border border-emerald-500/50 text-emerald-400 flex items-center justify-center font-bold text-lg shadow-lg shadow-emerald-900/30">M</div>
+            <div class="w-9 h-9 rounded-xl bg-emerald-950 border border-emerald-500/50 flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-900/30">
+              <img src="https://media2.giphy.com/media/l0HlRnAWXxn0MhOBK/giphy.gif" alt="Lightning Bolt" class="w-6 h-6 object-contain filter drop-shadow-[0_0_2px_#34d399]" />
+            </div>
             <div>
               <h1 class="font-extrabold text-emerald-300 tracking-wider text-sm leading-tight">YEAR LEVEL 2 MEDICINE</h1>
               <p class="text-[11px] text-emerald-500 font-medium" x-text="timeGreeting"></p>
@@ -39,9 +41,12 @@
           <template x-for="item in navItems" :key="item.id">
             <button @click="currentNav = item.id"
                     :class="currentNav === item.id ? 'bg-emerald-900/60 text-emerald-200 border border-emerald-500/50 shadow-lg shadow-emerald-950 font-semibold' : 'text-emerald-500 hover:bg-emerald-950/40 hover:text-emerald-300 font-medium border border-transparent'"
-                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left">
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left relative">
               <span class="text-base" x-text="item.icon"></span>
               <span x-text="item.label"></span>
+              <template x-if="item.id === 'trash' && trashBin.length > 0">
+                <span class="absolute right-3 bg-red-950 text-red-400 border border-red-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold" x-text="trashBin.length"></span>
+              </template>
             </button>
           </template>
         </nav>
@@ -63,6 +68,20 @@
           <h2 class="text-lg font-extrabold text-emerald-300 tracking-tight" x-text="dateHeaderString"></h2>
           <div class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-900" x-text="currentTimeString"></div>
         </div>
+
+        <!-- UNDO / REDO CONTROLS -->
+        <div class="flex items-center gap-2">
+          <button @click="undo()" :disabled="historyIndex <= 0"
+                  :class="historyIndex <= 0 ? 'opacity-40 cursor-not-allowed bg-black' : 'hover:bg-emerald-950 bg-black border-emerald-800 text-emerald-200'"
+                  class="px-3 py-1.5 rounded-xl border border-emerald-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
+            <span>↩</span> Undo
+          </button>
+          <button @click="redo()" :disabled="historyIndex >= history.length - 1"
+                  :class="historyIndex >= history.length - 1 ? 'opacity-40 cursor-not-allowed bg-black' : 'hover:bg-emerald-950 bg-black border-emerald-800 text-emerald-200'"
+                  class="px-3 py-1.5 rounded-xl border border-emerald-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
+            Redo <span>↪</span>
+          </button>
+        </div>
       </header>
 
       <!-- 1. JOURNAL VIEW -->
@@ -83,19 +102,23 @@
                    class="border rounded-xl p-3.5 cursor-pointer transition-all space-y-1">
                 <div class="flex items-center justify-between">
                   <span class="font-bold text-xs text-emerald-200 truncate" x-text="note.title || 'Untitled Note'"></span>
+                  <button @click.stop="deleteJournalEntry(note.id)" class="text-red-400 hover:text-red-300 text-[10px] px-1.5 py-0.5 rounded border border-red-950">Delete</button>
                 </div>
                 <p class="text-[11px] text-emerald-500 truncate" x-text="note.content || 'Empty note...'"></p>
                 <div class="text-[9px] text-emerald-600 pt-1" x-text="note.date"></div>
               </div>
+            </template>
+            <template x-if="journalNotes.length === 0">
+              <div class="text-xs text-emerald-600 italic p-4 text-center">No active journal notes. Click "+ New Note" to add one.</div>
             </template>
           </div>
 
           <div class="md:col-span-2 bg-black border border-emerald-900/80 rounded-2xl p-4 flex flex-col h-[60vh]">
             <template x-if="getActiveJournal()">
               <div class="flex flex-col h-full space-y-4">
-                <input type="text" x-model="getActiveJournal().title" @input="saveJournalNotes()" placeholder="Note Title..."
+                <input type="text" x-model="getActiveJournal().title" @input="recordChange()" placeholder="Note Title..."
                        class="w-full bg-black border border-emerald-900 rounded-xl px-4 py-2.5 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500">
-                <textarea x-model="getActiveJournal().content" @input="saveJournalNotes()" placeholder="Write your notes here..."
+                <textarea x-model="getActiveJournal().content" @input="recordChange()" placeholder="Write your notes here..."
                           class="w-full flex-1 bg-black border border-emerald-900 rounded-xl p-4 text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 resize-none font-mono"></textarea>
                 <div class="flex items-center justify-between text-[11px] text-emerald-600 pt-2 border-t border-emerald-950">
                   <span x-text="'Last updated: ' + getActiveJournal().date"></span>
@@ -103,35 +126,38 @@
                 </div>
               </div>
             </template>
+            <template x-if="!getActiveJournal()">
+              <div class="flex-1 flex items-center justify-center text-xs text-emerald-600 italic">Select a note from the left list or create a new one.</div>
+            </template>
           </div>
         </div>
       </div>
 
-      <!-- 2. CLASSES / SCHEDULE VIEW -->
+      <!-- 2. CLASSES VIEW -->
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'classes'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">Class Schedule & Lectures</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Track your semester modules, lecture halls, and professor contact details.</p>
+            <h3 class="font-bold text-emerald-300 text-lg">Year Level 2 Weekly Schedule Matrix</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Regular modules parsed directly from your official curriculum layout.</p>
           </div>
-          <button @click="addClassItem()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Class</button>
+          <button @click="addClassItem()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Slot</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <template x-for="(cls, index) in classList" :key="cls.id">
             <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 space-y-3">
               <div class="flex items-center justify-between">
-                <input type="text" x-model="cls.name" @input="saveToCloud()" class="bg-black border border-emerald-900 rounded-lg px-2.5 py-1 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500 w-2/3">
+                <input type="text" x-model="cls.name" @input="recordChange()" class="bg-black border border-emerald-900 rounded-lg px-2.5 py-1 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500 w-2/3">
                 <button @click="removeClassItem(index)" class="text-red-400 hover:text-red-300 text-xs">Delete</button>
               </div>
               <div class="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <label class="text-[10px] text-emerald-600 block">Time / Days</label>
-                  <input type="text" x-model="cls.schedule" @input="saveToCloud()" class="w-full bg-black border border-emerald-900 rounded-lg px-2 py-1 text-emerald-300 focus:outline-none focus:border-emerald-500">
+                  <input type="text" x-model="cls.schedule" @input="recordChange()" class="w-full bg-black border border-emerald-900 rounded-lg px-2 py-1 text-emerald-300 focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
-                  <label class="text-[10px] text-emerald-600 block">Location</label>
-                  <input type="text" x-model="cls.location" @input="saveToCloud()" class="w-full bg-black border border-emerald-900 rounded-lg px-2 py-1 text-emerald-300 focus:outline-none focus:border-emerald-500">
+                  <label class="text-[10px] text-emerald-600 block">Location / Notes</label>
+                  <input type="text" x-model="cls.location" @input="recordChange()" class="w-full bg-black border border-emerald-900 rounded-lg px-2 py-1 text-emerald-300 focus:outline-none focus:border-emerald-500">
                 </div>
               </div>
             </div>
@@ -143,8 +169,8 @@
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'exams'" x-cloak>
         <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-emerald-300 text-lg">Exam Countdown & High-Yield Blocks</h3>
-            <p class="text-xs text-emerald-500 mt-0.5">Keep track of upcoming board practicals, OSPEs, and department finals.</p>
+            <h3 class="font-bold text-emerald-300 text-lg">Exam Weeks & Semester Finals</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Official block examination schedules mapped for 2026.</p>
           </div>
           <button @click="addExamItem()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold rounded-xl text-xs shadow-sm">+ Add Exam</button>
         </div>
@@ -152,8 +178,8 @@
         <div class="space-y-3">
           <template x-for="(exam, index) in examList" :key="exam.id">
             <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between gap-4">
-              <input type="text" x-model="exam.title" @input="saveToCloud()" class="bg-black border border-emerald-900 rounded-lg px-3 py-1.5 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500 flex-1">
-              <input type="date" x-model="exam.date" @input="saveToCloud()" class="bg-black border border-emerald-900 rounded-lg px-3 py-1.5 text-xs text-emerald-300 focus:outline-none focus:border-emerald-500">
+              <input type="text" x-model="exam.title" @input="recordChange()" class="bg-black border border-emerald-900 rounded-lg px-3 py-1.5 text-sm font-bold text-emerald-200 focus:outline-none focus:border-emerald-500 flex-1">
+              <input type="date" x-model="exam.date" @input="recordChange()" class="bg-black border border-emerald-900 rounded-lg px-3 py-1.5 text-xs text-emerald-300 focus:outline-none focus:border-emerald-500">
               <button @click="removeExamItem(index)" class="text-red-400 hover:text-red-300 text-xs">Delete</button>
             </div>
           </template>
@@ -162,12 +188,66 @@
 
       <!-- 4. CALENDAR VIEW -->
       <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'calendar'" x-cloak>
-        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4">
-          <h3 class="font-bold text-emerald-300 text-lg">Master Academic Calendar</h3>
-          <p class="text-xs text-emerald-500 mt-0.5">Overview of your block schedule and curriculum timeline.</p>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg" x-text="calendarMonthName"></h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Master academic timeline and monthly schedule grid.</p>
+          </div>
+          <div class="flex gap-2">
+            <button @click="changeMonth(-1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">&larr; Prev</button>
+            <button @click="changeMonth(1)" class="px-3 py-1.5 bg-black border border-emerald-900 hover:bg-emerald-950 text-emerald-300 rounded-lg text-xs font-bold">Next &rarr;</button>
+          </div>
         </div>
-        <div class="bg-black border border-emerald-900/80 rounded-2xl p-6 text-center text-xs text-emerald-500">
-          Calendar matrix populated and synced dynamically via Cloud Store.
+
+        <div class="bg-black border border-emerald-900/80 rounded-2xl p-4">
+          <div class="grid grid-cols-7 gap-2 mb-2 text-center font-bold text-xs text-emerald-500">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+          </div>
+          <div class="grid grid-cols-7 gap-2">
+            <template x-for="day in calendarDays" :key="day.dateStr">
+              <div :class="day.isCurrentMonth ? 'bg-black border-emerald-900' : 'bg-emerald-950/10 border-emerald-950/40 opacity-40'"
+                   class="border rounded-xl p-2.5 h-24 flex flex-col justify-between overflow-hidden">
+                <div class="text-xs font-bold text-emerald-400" x-text="day.dayNum"></div>
+                <div class="space-y-1 overflow-y-auto">
+                  <template x-for="ev in day.events">
+                    <div class="text-[9px] bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 px-1.5 py-0.5 rounded truncate" x-text="ev"></div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. TRASH BIN VIEW -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" x-show="currentNav === 'trash'" x-cloak>
+        <div class="bg-emerald-950/40 border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-300 text-lg">30-Day Trash Bin</h3>
+            <p class="text-xs text-emerald-500 mt-0.5">Deleted journal items are kept here for 30 days before permanent removal.</p>
+          </div>
+          <template x-if="trashBin.length > 0">
+            <button @click="emptyTrash()" class="px-4 py-2 bg-red-950 hover:bg-red-900 text-red-300 border border-red-900 font-bold rounded-xl text-xs shadow-sm">Empty Trash</button>
+          </template>
+        </div>
+
+        <div class="space-y-3">
+          <template x-for="(item, index) in trashBin" :key="item.id">
+            <div class="bg-black border border-emerald-900/80 rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-sm font-bold text-emerald-200" x-text="item.title || 'Untitled'"></div>
+                <div class="text-[11px] text-emerald-500 truncate max-w-xl" x-text="item.content || 'Empty note...'"></div>
+                <div class="text-[10px] text-red-400" x-text="'Deleted on: ' + new Date(item.deletedAt).toLocaleDateString()"></div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button @click="restoreFromTrash(index)" class="px-3 py-1.5 bg-emerald-950 border border-emerald-800 text-emerald-300 hover:bg-emerald-900 text-xs rounded-xl font-bold">Restore</button>
+                <button @click="permanentlyDelete(index)" class="px-3 py-1.5 bg-red-950 border border-red-900 text-red-300 hover:bg-red-900 text-xs rounded-xl font-bold">Delete Forever</button>
+              </div>
+            </div>
+          </template>
+          <template x-if="trashBin.length === 0">
+            <div class="text-center py-16 text-xs text-emerald-600 italic">Trash bin is completely empty.</div>
+          </template>
         </div>
       </div>
 
@@ -202,16 +282,46 @@
   <script>
     function smartPlannerApp() {
       const uid = () => Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
-      const defaultJournalNotes = [
-        { id: uid(), title: 'Cardiology High-Yield', content: 'Remember pressure-volume loops during heart failure.', date: new Date().toLocaleDateString() }
-      ];
+      
       const defaultClasses = [
-        { id: uid(), name: 'Medical Physiology II', schedule: 'Mon, Wed 09:00 AM', location: 'Lecture Hall A' },
-        { id: uid(), name: 'Systemic Pathology', schedule: 'Tue, Thu 01:00 PM', location: 'Lab Room 3' }
+        { id: uid(), name: 'Patho (Mon 8-12, Wed 1-3, Mon 3-5)', schedule: 'Mon / Wed', location: 'Lecture Hall' },
+        { id: uid(), name: 'IMPD (Tue 8-10, Thu 1-5)', schedule: 'Tue / Thu', location: 'Clinic / Room' },
+        { id: uid(), name: 'Micro (Wed 8-10, Thu 8-10)', schedule: 'Wed / Thu', location: 'Lab' },
+        { id: uid(), name: 'BPharm (Mon 1-3, Fri 1-5)', schedule: 'Mon / Fri', location: 'Hall B' },
+        { id: uid(), name: 'FCM2 (Tue 1-3)', schedule: 'Tue 1-3 PM', location: 'Community' },
+        { id: uid(), name: 'NS2-Neuro (Tue 3-5 PM)', schedule: 'Tue 3-5 PM', location: 'Hall A' },
+        { id: uid(), name: 'Pedia1 (Fri 8-10 AM)', schedule: 'Fri 8-10 AM', location: 'Ward' },
+        { id: uid(), name: 'MS2 (Fri 10-12 PM)', schedule: 'Fri 10-12 PM', location: 'Hall A' }
       ];
+
       const defaultExams = [
-        { id: uid(), title: 'Physiology Midterms', date: '2026-08-15' },
-        { id: uid(), title: 'Pathology OSPE Practical', date: '2026-08-28' }
+        { id: uid(), title: 'Exam: Pedia (8-10) / Patho (10-12)', date: '2026-08-24' },
+        { id: uid(), title: 'Exam: IMPD (8-10) / NS2 (10-12)', date: '2026-08-25' },
+        { id: uid(), title: 'Exam: Micro (8-10)', date: '2026-08-26' },
+        { id: uid(), title: 'Exam: FCM2 (8-10)', date: '2026-08-27' },
+        { id: uid(), title: 'Exam: MS2 (8-10) / BPharm (10-12)', date: '2026-08-28' },
+        { id: uid(), title: 'Exam 2: Mon (Pedia/Patho)', date: '2026-09-28' },
+        { id: uid(), title: 'Exam 2: Tue (IMPD/NS2)', date: '2026-09-29' },
+        { id: uid(), title: 'Exam 2: Wed (Micro)', date: '2026-09-30' },
+        { id: uid(), title: 'Exam 2: Thu (FCM2)', date: '2026-10-01' },
+        { id: uid(), title: 'Exam 2: Fri (MS2/BPharm)', date: '2026-10-02' },
+        { id: uid(), title: 'Exam 3: Mon', date: '2026-10-26' },
+        { id: uid(), title: 'Exam 3: Tue', date: '2026-10-27' },
+        { id: uid(), title: 'Exam 3: Wed', date: '2026-10-28' },
+        { id: uid(), title: 'Exam 3: Thu', date: '2026-10-29' },
+        { id: uid(), title: 'Exam 3: Fri', date: '2026-10-30' },
+        { id: uid(), title: 'Exam 4: Mon', date: '2026-12-01' },
+        { id: uid(), title: 'Exam 4: Tue', date: '2026-12-02' },
+        { id: uid(), title: 'Exam 4: Wed', date: '2026-12-03' },
+        { id: uid(), title: 'Exam 4: Thu', date: '2026-12-04' },
+        { id: uid(), title: 'Exam 4: Fri', date: '2026-12-07' },
+        { id: uid(), title: 'Sem Exam: Day 1', date: '2026-12-09' },
+        { id: uid(), title: 'Sem Exam: Day 2', date: '2026-12-10' },
+        { id: uid(), title: 'Sem Exam: Day 3', date: '2026-12-11' }
+      ];
+
+      const defaultJournals = [
+        { id: uid(), title: 'YL2 Orientation & Modules', content: 'Keep track of high-yield cases and laboratory requirements.', date: new Date().toLocaleDateString() }
       ];
 
       return {
@@ -224,20 +334,29 @@
           { id: 'journal', label: 'Journal Notes', icon: '📓' },
           { id: 'classes', label: 'Classes & Modules', icon: '🩺' },
           { id: 'exams', label: 'Exams Tracker', icon: '📝' },
-          { id: 'calendar', label: 'Master Calendar', icon: '📅' }
+          { id: 'calendar', label: 'Master Calendar', icon: '📅' },
+          { id: 'trash', label: 'Trash Bin', icon: '🗑️' }
         ],
-        journalNotes: defaultJournalNotes,
+        journalNotes: defaultJournals,
         activeJournalId: null,
         classList: defaultClasses,
         examList: defaultExams,
+        trashBin: [],
+        
+        history: [],
+        historyIndex: -1,
+        isRestoringHistory: false,
+
+        viewYear: 2026,
+        viewMonth: 7,
+        calendarMonthName: '',
+        calendarDays: [],
 
         async init() {
           this.updateClock();
           setInterval(() => this.updateClock(), 1000);
-          if (this.journalNotes.length > 0) {
-            this.activeJournalId = this.journalNotes[0].id;
-          }
           await this.loadFromCloud();
+          this.generateCalendar();
         },
 
         async loadFromCloud() {
@@ -249,9 +368,15 @@
             const snap = await window.cloudGetDoc(window.cloudDoc(window.cloudDB, "planners", "med_schedule_data"));
             if (snap.exists()) {
               const data = snap.data();
-              this.journalNotes = data.journalNotes || defaultJournalNotes;
-              this.classList = data.classList || defaultClasses;
-              this.examList = data.examList || defaultExams;
+              this.journalNotes = (data.journalNotes && data.journalNotes.length > 0) ? data.journalNotes : defaultJournals;
+              this.classList = (data.classList && data.classList.length > 0) ? data.classList : defaultClasses;
+              this.examList = (data.examList && data.examList.length > 0) ? data.examList : defaultExams;
+              
+              const now = Date.now();
+              const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+              let rawTrash = data.trashBin || [];
+              this.trashBin = rawTrash.filter(t => (now - t.deletedAt) < thirtyDaysMs);
+
               this.syncStatusText = "Synced with Firebase ✨";
             } else {
               this.syncStatusText = "Creating Cloud Record ✨";
@@ -264,6 +389,54 @@
           if (this.journalNotes.length > 0 && !this.activeJournalId) {
             this.activeJournalId = this.journalNotes[0].id;
           }
+          this.pushHistoryState();
+          this.generateCalendar();
+        },
+
+        pushHistoryState() {
+          if (this.isRestoringHistory) return;
+          const currentState = JSON.stringify({
+            journalNotes: this.journalNotes,
+            classList: this.classList,
+            examList: this.examList,
+            trashBin: this.trashBin
+          });
+          
+          if (this.historyIndex >= 0 && this.history[this.historyIndex] === currentState) return;
+
+          this.history = this.history.slice(0, this.historyIndex + 1);
+          this.history.push(currentState);
+          this.historyIndex = this.history.length - 1;
+        },
+
+        recordChange() {
+          this.pushHistoryState();
+          this.saveToCloud();
+        },
+
+        undo() {
+          if (this.historyIndex > 0) {
+            this.historyIndex--;
+            this.applyHistoryState();
+          }
+        },
+
+        redo() {
+          if (this.historyIndex < this.history.length - 1) {
+            this.historyIndex++;
+            this.applyHistoryState();
+          }
+        },
+
+        applyHistoryState() {
+          this.isRestoringHistory = true;
+          const state = JSON.parse(this.history[this.historyIndex]);
+          this.journalNotes = state.journalNotes;
+          this.classList = state.classList;
+          this.examList = state.examList;
+          this.trashBin = state.trashBin || [];
+          this.isRestoringHistory = false;
+          this.saveToCloud();
         },
 
         async saveToCloud() {
@@ -274,6 +447,7 @@
               journalNotes: this.journalNotes,
               classList: this.classList,
               examList: this.examList,
+              trashBin: this.trashBin,
               lastUpdated: new Date()
             });
             this.syncStatusText = "Synced with Firebase ✨";
@@ -281,6 +455,7 @@
             console.error("Cloud save error:", e);
             this.syncStatusText = "Sync Failed ⚠️";
           }
+          this.generateCalendar();
         },
 
         updateClock() {
@@ -299,33 +474,105 @@
           const newNote = { id: uid(), title: 'New Clinical Note', content: '', date: new Date().toLocaleDateString() };
           this.journalNotes.unshift(newNote);
           this.activeJournalId = newNote.id;
-          this.saveToCloud();
+          this.recordChange();
         },
 
-        saveJournalNotes() {
-          const active = this.getActiveJournal();
-          if (active) active.date = new Date().toLocaleDateString();
-          this.saveToCloud();
+        deleteJournalEntry(id) {
+          const index = this.journalNotes.findIndex(n => n.id === id);
+          if (index !== -1) {
+            const removed = this.journalNotes.splice(index, 1)[0];
+            removed.deletedAt = Date.now();
+            this.trashBin.unshift(removed);
+            
+            if (this.activeJournalId === id) {
+              this.activeJournalId = this.journalNotes.length > 0 ? this.journalNotes[0].id : null;
+            }
+            this.recordChange();
+          }
+        },
+
+        restoreFromTrash(index) {
+          const restored = this.trashBin.splice(index, 1)[0];
+          delete restored.deletedAt;
+          this.journalNotes.push(restored);
+          this.activeJournalId = restored.id;
+          this.recordChange();
+        },
+
+        permanentlyDelete(index) {
+          this.trashBin.splice(index, 1);
+          this.recordChange();
+        },
+
+        emptyTrash() {
+          this.trashBin = [];
+          this.recordChange();
         },
 
         addClassItem() {
           this.classList.push({ id: uid(), name: 'New Subject', schedule: 'TBD', location: 'TBD' });
-          this.saveToCloud();
+          this.recordChange();
         },
 
         removeClassItem(index) {
           this.classList.splice(index, 1);
-          this.saveToCloud();
+          this.recordChange();
         },
 
         addExamItem() {
           this.examList.push({ id: uid(), title: 'New Exam / Quiz', date: new Date().toISOString().split('T')[0] });
-          this.saveToCloud();
+          this.recordChange();
         },
 
         removeExamItem(index) {
           this.examList.splice(index, 1);
-          this.saveToCloud();
+          this.recordChange();
+        },
+
+        generateCalendar() {
+          const firstDayIndex = new Date(this.viewYear, this.viewMonth, 1).getDay();
+          const totalDays = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
+          this.calendarMonthName = new Date(this.viewYear, this.viewMonth).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+          
+          let days = [];
+          const prevTotalDays = new Date(this.viewYear, this.viewMonth, 0).getDate();
+          
+          for (let i = firstDayIndex - 1; i >= 0; i--) {
+            const dNum = prevTotalDays - i;
+            days.push({ dayNum: dNum, isCurrentMonth: false, dateStr: '', events: [] });
+          }
+
+          for (let i = 1; i <= totalDays; i++) {
+            const mStr = String(this.viewMonth + 1).padStart(2, '0');
+            const dStr = String(i).padStart(2, '0');
+            const dateString = `${this.viewYear}-${mStr}-${dStr}`;
+            
+            let evs = [];
+            this.examList.forEach(ex => {
+              if (ex.date === dateString) evs.push(ex.title);
+            });
+
+            days.push({ dayNum: i, isCurrentMonth: true, dateStr: dateString, events: evs });
+          }
+
+          const remaining = 42 - days.length;
+          for (let i = 1; i <= remaining; i++) {
+            days.push({ dayNum: i, isCurrentMonth: false, dateStr: '', events: [] });
+          }
+
+          this.calendarDays = days;
+        },
+
+        changeMonth(dir) {
+          this.viewMonth += dir;
+          if (this.viewMonth > 11) {
+            this.viewMonth = 0;
+            this.viewYear++;
+          } else if (this.viewMonth < 0) {
+            this.viewMonth = 11;
+            this.viewYear--;
+          }
+          this.generateCalendar();
         }
       }
     }
