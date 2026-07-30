@@ -1,0 +1,22 @@
+{
+  "name": "YL2 Medicine Planner",
+  "short_name": "YL2 Planner",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "https://media2.giphy.com/media/l0HlRnAWXxn0MhOBK/giphy.gif",
+      "sizes": "192x192",
+      "type": "image/gif",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://media2.giphy.com/media/l0HlRnAWXxn0MhOBK/giphy.gif",
+      "sizes": "512x512",
+      "type": "image/gif",
+      "purpose": "any maskable"
+    }
+  ]
+}
