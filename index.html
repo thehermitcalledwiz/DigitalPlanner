@@ -7,11 +7,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs with explicit cache-busting -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
-    import { getFirestore, doc as fsDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBcFt0qsHouaON_U4k1w_mBlDGdslUt3-U",
@@ -29,7 +29,7 @@
 
     // Make database functions globally accessible to Alpine.js safely
     window.db = db;
-    window.fsDoc = fsDoc;
+    window.fsDoc = doc;
     window.setDoc = setDoc;
     window.getDoc = getDoc;
     console.log("Firebase Connected Successfully!");
@@ -619,7 +619,7 @@ function smartPlannerApp() {
   ];
 
   return {
-    currentNav: 'calendar',
+    currentNav: 'journal',
     selectedFilter: 'ALL',
     currentTimeString: '',
     dateHeaderString: '',
@@ -701,7 +701,7 @@ function smartPlannerApp() {
         }
       } catch (e) {
         console.error("Cloud load error:", e);
-        this.syncStatusText = "Offline / Local Mode";
+        this.syncStatusText = "Sync Failed ⚠️";
       }
       if (this.journalNotes.length > 0 && !this.activeJournalId) {
         this.activeJournalId = this.journalNotes[0].id;
